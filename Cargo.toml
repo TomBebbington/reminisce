@@ -1,6 +1,6 @@
 [package]
 name = "reminisce"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Tom Bebbington <tophattedcoder@gmail.com>"]
 description = "A joystick detection and event-handling library"
 keywords = [ "joystick", "gamepad", "input" ]
