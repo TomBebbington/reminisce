@@ -2,6 +2,9 @@
 name = "reminisce"
 version = "0.0.1"
 authors = ["Tom Bebbington <tophattedcoder@gmail.com>"]
+description = "A joystick detection and event-handling library"
+keywords = [ "joystick", "gamepad", "input" ]
+license = "MIT"
 
 [lib]
 name = "reminisce"
