@@ -1,0 +1,11 @@
+[package]
+name = "reminisce"
+version = "0.0.1"
+authors = ["Tom Bebbington <tophattedcoder@gmail.com>"]
+
+[lib]
+name = "reminisce"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
