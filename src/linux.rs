@@ -125,7 +125,7 @@ impl ::IntoEvent for LinuxEvent {
 			(1, 0) => ::Event::ButtonReleased(self.number),
 			(1, 1) => ::Event::ButtonPressed(self.number),
 			(2, _) => ::Event::JoystickMoved(self.number, self.value),
-			_ => panic!("Bad type and value {} {}", self._type, self.value)
+			_ => panic!("Bad type and value {} {} for joystick", self._type, self.value)
 		}
 	}
 }
