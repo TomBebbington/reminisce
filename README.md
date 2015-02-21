@@ -1,4 +1,4 @@
-# Reminisce
+# Reminisce [![Build Status](https://travis-ci.org/TomBebbington/reminisce.svg?branch=master)](https://travis-ci.org/TomBebbington/reminisce)
 
 ~~rusted joy, geddit?~~
 
