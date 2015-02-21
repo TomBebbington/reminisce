@@ -49,11 +49,12 @@ impl Joystick {
 		unsafe {
 			let mut event:LinuxEvent = mem::uninitialized();
 			loop {
-				if read(self.fd, mem::transmute(&mut event), mem::size_of::<LinuxEvent>() as c_ulong) == -1 {
+				let event_size = mem::size_of::<LinuxEvent>() as c_ulong;
+				if read(self.fd, mem::transmute(&mut event), event_size) == -1 {
 					match os::errno() {
 						19 => self.plugged = false,
 						11 => (),
-						code => 
+						code =>
 							panic!("Error while polling joystick {} - {} - {}", self.id, code, os_error())
 					}
 					return None

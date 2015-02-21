@@ -1,5 +1,7 @@
 use libc::*;
 use std::mem;
+// I tried
+// It's a bit hard to write this without a Windows pc on hand...
 extern "stdcall" {
 	/// How many joysticks could be plugged in
 	fn joyGetNumDevs() -> c_uint;
