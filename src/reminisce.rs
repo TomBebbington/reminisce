@@ -14,6 +14,7 @@ mod windows;
 pub use windows::*;
 
 #[derive(Copy, Debug)]
+/// An event from a joystick
 pub enum Event {
 	ButtonPressed(u8),
 	ButtonReleased(u8),

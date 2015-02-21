@@ -2,18 +2,29 @@ use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, read, strerror};
 use std::ffi::{c_str_to_bytes, CString};
 use std::{mem, os, str};
 
+pub static MAX_JOYSTICK_VALUE:i16 = 32767;
+pub static MIN_JOYSTICK_VALUE:i16 = -32767;
+
 static JSIOCGAXES: c_uint = 2147576337;
 static JSIOCGBUTTONS: c_uint = 2147576338;
 static JSIOCGID: c_uint = 2151705107;
 static JSIOCGID_LEN: usize = 64;
 extern {
 	fn open(path: *const c_char, oflag: c_int) -> c_int;
+	fn close(fd: c_int) -> c_int;
 	fn ioctl(fd: c_uint, op: c_uint, result: *mut c_char);
 }
-
+fn os_error() -> &'static str {
+	unsafe {
+		let num = os::errno() as c_int;
+		let bytes = c_str_to_bytes(mem::transmute(&strerror(num)));
+		str::from_utf8(bytes).unwrap()
+	}
+}
 pub struct Joystick {
 	id: u8,
-	fd: c_int
+	fd: c_int,
+	plugged: bool
 }
 impl Joystick {
 	pub fn new(id: u8) -> Result<Joystick, &'static str> {
@@ -22,13 +33,12 @@ impl Joystick {
 			let c_path = CString::from_slice(path.as_bytes());
 			let fd =  open(c_path.as_ptr(), O_RDONLY | 0x800);
 			if fd == -1 {
-				let num = os::errno() as c_int;
-				let bytes = c_str_to_bytes(mem::transmute(&strerror(num)));
-				Err(str::from_utf8(bytes).unwrap())
+				Err(os_error())
 			} else {
 				Ok(Joystick {
 					id: id,
-					fd: fd
+					fd: fd,
+					plugged: true
 				})
 			}
 		}
@@ -40,12 +50,22 @@ impl Joystick {
 			let mut event:LinuxEvent = mem::uninitialized();
 			loop {
 				if read(self.fd, mem::transmute(&mut event), mem::size_of::<LinuxEvent>() as c_ulong) == -1 {
+					match os::errno() {
+						19 => self.plugged = false,
+						11 => (),
+						code => 
+							panic!("Error while polling joystick {} - {} - {}", self.id, code, os_error())
+					}
 					return None
 				} else if event._type & 0x80 == 0 {
 					return Some(event.into_event())
 				}
 			}
 		}
+	}
+	/// Check if this joystick is still plugged in
+	pub fn is_plugged(&self) -> bool {
+		self.plugged
 	}
 	/// Get the number of axes supported by this joystick
 	pub fn get_num_axes(&self) -> u8 {
@@ -76,6 +96,15 @@ impl Joystick {
 	/// Get the numerical identifier of this joystick
 	pub fn get_id(&self) -> u8 {
 		self.id
+	}
+}
+impl Drop for Joystick {
+	fn drop(&mut self) {
+		unsafe {
+			if close(self.fd) == -1 {
+				panic!("Failed to close joystick {} due to {}", self.id, os_error())
+			}
+		}
 	}
 }
 #[repr(C)]
