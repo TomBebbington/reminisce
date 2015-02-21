@@ -1,5 +1,5 @@
 use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, read, strerror};
-use std::ffi::{c_str_to_bytes, CString};
+use std::ffi::{CStr, CString};
 use std::{mem, os, str};
 
 pub static MAX_JOYSTICK_VALUE:i16 = 32767;
@@ -17,8 +17,8 @@ extern {
 fn os_error() -> &'static str {
 	unsafe {
 		let num = os::errno() as c_int;
-		let bytes = c_str_to_bytes(mem::transmute(&strerror(num)));
-		str::from_utf8(bytes).unwrap()
+		let c_error = CStr::from_ptr(strerror(num) as *const i8);
+		str::from_utf8(c_error.to_bytes()).unwrap()
 	}
 }
 pub struct Joystick {
@@ -30,7 +30,7 @@ impl Joystick {
 	pub fn new(id: u8) -> Result<Joystick, &'static str> {
 		let path = format!("/dev/input/js{}", id);
 		unsafe {
-			let c_path = CString::from_slice(path.as_bytes());
+			let c_path = CString::new(path.as_bytes()).unwrap();
 			let fd =  open(c_path.as_ptr(), O_RDONLY | 0x800);
 			if fd == -1 {
 				Err(os_error())

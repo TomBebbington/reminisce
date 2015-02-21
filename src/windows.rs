@@ -80,7 +80,7 @@ impl Joystick {
 	}
 	pub fn get_pretty_id(&self) -> String {
 		unsafe {
-			let name = &self.caps.product_name[];
+			let name = &self.caps.product_name[..];
 			String::from_utf8_lossy(mem::transmute(name)).into_owned()
 		}
 	}
