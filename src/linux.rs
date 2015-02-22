@@ -113,7 +113,7 @@ impl Drop for Joystick {
 	}
 }
 #[repr(C)]
-pub struct LinuxEvent {
+struct LinuxEvent {
 	/// timestamp in milleseconds
 	time: u32,
 	/// value
