@@ -3,7 +3,7 @@ use reminisce::*;
 fn main() {
 	let mut joysticks:Vec<Joystick> = (0..4).filter_map(|i| Joystick::new(i).ok()).collect();
 	for js in &joysticks {
-		println!("Joystick #{}: {}", js.get_id(), js.get_pretty_id());
+		println!("Joystick #{}: {}", js.get_index(), js.get_id());
 		println!("\tAxes: {}", js.get_num_axes());
 		println!("\tButtons: {}", js.get_num_buttons());
 	}
@@ -12,7 +12,7 @@ fn main() {
 	}
 	loop {
 		for js in &mut joysticks {
-			if js.is_plugged() {
+			if js.is_connected() {
 				if let Some(event) = js.poll() {
 					println!("{}: {:?}", js.get_id(), event)
 				}

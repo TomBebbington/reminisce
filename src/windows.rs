@@ -46,27 +46,29 @@ pub struct JoyCaps {
 }
 
 pub struct Joystick {
+	index: u8,
 	info: JoyInfo,
 	caps: JoyCaps
 }
 impl Joystick {
-	pub fn new(id: u8) -> Result<Joystick, &'static str> {
+	pub fn new(index: u8) -> Result<Joystick, &'static str> {
 		unsafe {
 			let mut info = mem::uninitialized();
 			let mut caps = mem::uninitialized();
-			match joyGetDevCaps(id as c_uint, &mut caps as *mut JoyCaps, mem::size_of::<JoyCaps>() as c_uint) {
+			match joyGetDevCaps(index as c_uint, &mut caps as *mut JoyCaps, mem::size_of::<JoyCaps>() as c_uint) {
 				MmResult::NoError => (),
 				MmResult::Error => return Err("Error"),
 				MmResult::BadDeviceId => return Err("Bad Device Id"),
 				_ => return Err("Unknown Error")
 			}
-			match joyGetPos(id as c_uint, &mut info as *mut JoyInfo) {
+			match joyGetPos(index as c_uint, &mut info as *mut JoyInfo) {
 				MmResult::NoError => (),
 				MmResult::Error => return Err("Error"),
 				MmResult::BadDeviceId => return Err("Bad Device Id"),
 				_ => return Err("Unknown Error")
 			}
 			Ok(Joystick {
+				index: index,
 				info: info,
 				caps: caps
 			})
@@ -78,11 +80,14 @@ impl Joystick {
 	pub fn get_num_buttons(&self) -> u8 {
 		self.caps.num_buttons as u8
 	}
-	pub fn get_pretty_id(&self) -> String {
+	pub fn get_id(&self) -> String {
 		unsafe {
 			let name = &self.caps.product_name[..];
 			String::from_utf8_lossy(mem::transmute(name)).into_owned()
 		}
+	}
+	pub fn get_index(&self) -> u8 {
+		self.index
 	}
 	pub fn poll(&mut self) -> Option<String> {
 		None

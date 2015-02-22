@@ -22,13 +22,13 @@ fn os_error() -> &'static str {
 	}
 }
 pub struct Joystick {
-	id: u8,
+	index: u8,
 	fd: c_int,
-	plugged: bool
+	connected: bool
 }
 impl Joystick {
-	pub fn new(id: u8) -> Result<Joystick, &'static str> {
-		let path = format!("/dev/input/js{}", id);
+	pub fn new(index: u8) -> Result<Joystick, &'static str> {
+		let path = format!("/dev/input/js{}", index);
 		unsafe {
 			let c_path = CString::new(path.as_bytes()).unwrap();
 			let fd =  open(c_path.as_ptr(), O_RDONLY | 0x800);
@@ -36,9 +36,9 @@ impl Joystick {
 				Err(os_error())
 			} else {
 				Ok(Joystick {
-					id: id,
+					index: index,
 					fd: fd,
-					plugged: true
+					connected: true
 				})
 			}
 		}
@@ -52,10 +52,10 @@ impl Joystick {
 				let event_size = mem::size_of::<LinuxEvent>() as c_ulong;
 				if read(self.fd, mem::transmute(&mut event), event_size) == -1 {
 					match os::errno() {
-						19 => self.plugged = false,
+						19 => self.connected = false,
 						11 => (),
 						code =>
-							panic!("Error while polling joystick {} - {} - {}", self.id, code, os_error())
+							panic!("Error while polling joystick {} - {} - {}", self.index, code, os_error())
 					}
 					return None
 				} else if event._type & 0x80 == 0 {
@@ -64,9 +64,9 @@ impl Joystick {
 			}
 		}
 	}
-	/// Check if this joystick is still plugged in
-	pub fn is_plugged(&self) -> bool {
-		self.plugged
+	/// Check if this joystick is still connected
+	pub fn is_connected(&self) -> bool {
+		self.connected
 	}
 	/// Get the number of axes supported by this joystick
 	pub fn get_num_axes(&self) -> u8 {
@@ -84,8 +84,8 @@ impl Joystick {
 			num_buttons as u8
 		}
 	}
-	/// Get the pretty identifier of this joystick
-	pub fn get_pretty_id(&self) -> String {
+	/// Get the identifier of this joystick
+	pub fn get_id(&self) -> String {
 		unsafe {
 			let text = String::with_capacity(JSIOCGID_LEN);
 			ioctl(self.fd as u32, JSIOCGID, text.as_ptr() as *mut i8);
@@ -94,16 +94,16 @@ impl Joystick {
 			new_text
 		}
 	}
-	/// Get the numerical identifier of this joystick
-	pub fn get_id(&self) -> u8 {
-		self.id
+	/// Get the index of this joystick
+	pub fn get_index(&self) -> u8 {
+		self.index
 	}
 }
 impl Drop for Joystick {
 	fn drop(&mut self) {
 		unsafe {
 			if close(self.fd) == -1 {
-				panic!("Failed to close joystick {} due to {}", self.id, os_error())
+				panic!("Failed to close joystick {} due to {}", self.index, os_error())
 			}
 		}
 	}
