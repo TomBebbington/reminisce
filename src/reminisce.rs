@@ -1,3 +1,6 @@
+//! Reminisce is a lightweight library intended to be used for detecting and
+//! reading from joysticks.
+
 #![feature(core, std_misc, libc, os)]
 extern crate libc;
 
