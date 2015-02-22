@@ -16,8 +16,12 @@ pub use windows::*;
 #[derive(Copy, Debug)]
 /// An event from a joystick
 pub enum Event {
+	/// Fires when a button is pressed with the button's index
 	ButtonPressed(u8),
+	/// Fires when a button is released with the button's index
 	ButtonReleased(u8),
+	/// Fires when a joystick / axis is moved with the axis index and its value,
+	/// which is between MIN_JOYSTICK_VALUE and MAX_JOYSTICK_VALUE
 	JoystickMoved(u8, i16)
 }
 /// Convert a raw event into a Reminisce event
@@ -30,7 +34,15 @@ pub trait IntoEvent {
 /// A joystick that tracks its state
 pub struct SmartJoystick {
 	js: Joystick,
+	/// The axes on the joystick
+	///
+	/// Typically the first two of these are the primary analog stick's x and y
+	/// co-ordinates
 	pub axes: Vec<f32>,
+	/// The buttons on the joystick
+	///
+	/// These usually indicate the button priority with the first two being
+	/// accept and back buttons
 	pub buttons: Vec<bool>
 }
 impl SmartJoystick {

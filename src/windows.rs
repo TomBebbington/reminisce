@@ -52,6 +52,9 @@ pub struct Joystick {
 }
 impl Joystick {
 	/// Create a joystick from its index
+	///
+	/// This tries to get the capabilities and the position of the joystick using
+	/// the Windows Multimedia Joystick API
 	pub fn new(index: u8) -> Result<Joystick, &'static str> {
 		unsafe {
 			let mut info = mem::uninitialized();

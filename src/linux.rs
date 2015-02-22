@@ -30,6 +30,9 @@ pub struct Joystick {
 }
 impl Joystick {
 	/// Create a joystick from its index
+	///
+	/// This tries to open the interface `/dev/input/js...` and will return the
+	/// OS-level error if it fails to open this
 	pub fn new(index: u8) -> Result<Joystick, &'static str> {
 		let path = format!("/dev/input/js{}", index);
 		unsafe {
@@ -47,6 +50,9 @@ impl Joystick {
 		}
 	}
 	/// Poll this joystick for events
+	///
+	/// This reads from the interface in non-blocking mode and converts the native
+	/// event into a Reminisce event
 	pub fn poll(&mut self) -> Option<::Event> {
 		use ::IntoEvent;
 		unsafe {
