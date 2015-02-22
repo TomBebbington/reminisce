@@ -84,7 +84,7 @@ impl ::Joystick for NativeJoystick {
 						last_packet: 0,
 						events: VecDeque::with_capacity(10)
 					}),
-
+				0x48F => Err("Device not connected"),
 				_ => Err("Unknown Error")
 			}
 		}
