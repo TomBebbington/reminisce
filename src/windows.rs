@@ -149,10 +149,16 @@ impl ::StatefulJoystick for NativeJoystick {
 	}
 	fn get_button(&self, index: u8) -> Option<bool> {
 		let bits = match index {
+		0 => Some(Y),
 			1 => Some(A),
 			2 => Some(B),
 			3 => Some(X),
-			0 => Some(Y),
+			4 => Some(LEFT_SHOULDER),
+			5 => Some(RIGHT_SHOULDER),
+			8 => Some(BACK),
+			9 => Some(START),
+			10 => Some(LEFT_TRIGGER),
+			11 => Some(RIGHT_TRIGGER),
 			_ => None
 		};
 		bits.map(|v| self.last.buttons.contains(v))
@@ -173,10 +179,16 @@ impl ::StatefulJoystick for NativeJoystick {
 				thumb_ry => 3
 			}
 			event!{buttons self, now, last,
+			Y => 0,
 				A => 1,
 				B => 2,
 				X => 3,
-				Y => 0
+				LEFT_SHOULDER => 4,
+				RIGHT_SHOULDER => 5,
+				BACK => 8,
+				START => 9,
+				LEFT_TRIGGER => 10,
+				RIGHT_TRIGGER => 11
 			}
 		}
 		self.last_packet = state.packet;
