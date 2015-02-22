@@ -21,6 +21,7 @@ fn os_error() -> &'static str {
 		str::from_utf8(c_error.to_bytes()).unwrap()
 	}
 }
+#[derive(Debug)]
 pub struct Joystick {
 	index: u8,
 	fd: c_int,

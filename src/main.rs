@@ -1,7 +1,7 @@
 extern crate reminisce;
 use reminisce::*;
 fn main() {
-	let mut joysticks:Vec<Joystick> = (0..4).filter_map(|i| Joystick::new(i).ok()).collect();
+	let mut joysticks:Vec<SmartJoystick> = (0..4).filter_map(|i| SmartJoystick::new(i).ok()).collect();
 	for js in &joysticks {
 		println!("Joystick #{}: {}", js.get_index(), js.get_id());
 		println!("\tAxes: {}", js.get_num_axes());
@@ -12,10 +12,9 @@ fn main() {
 	}
 	loop {
 		for js in &mut joysticks {
+			js.update();
 			if js.is_connected() {
-				if let Some(event) = js.poll() {
-					println!("{}: {:?}", js.get_id(), event)
-				}
+				println!("{:?}", js)
 			}
 		}
 	}
