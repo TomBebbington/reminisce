@@ -57,21 +57,26 @@ struct Vibration {
 	right_motor_speed: i32
 }
 
-pub struct Joystick {
+pub struct NativeJoystick {
 	index: u8,
 	last: Gamepad
 }
-impl Joystick {
-	pub fn new(index: u8) -> Result<Joystick, &'static str> {
+impl ::Joystick for NativeJoystick {
+	fn new(index: u8) -> Result<NativeJoystick, &'static str> {
 		unsafe {
 			let mut caps:Capabilities = mem::uninitialized();
 			XInputGetCapabilities(index as u32, 0, &mut caps);
-			Ok(Joystick {
+			Ok(NativeJoystick {
 				index: index,
 				last: caps.gamepad
 			})
 		}
 	}
+	fn get_index(&self) -> u8 {
+		self.index
+	}
+}
+impl NativeJoystick {
 	pub fn get_axis(&self, index: usize) -> Option<i16> {
 		match index {
 			0 => Some(self.last.thumb_lx),

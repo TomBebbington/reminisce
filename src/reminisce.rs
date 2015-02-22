@@ -1,7 +1,7 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
 //! reading from joysticks.
 
-#![feature(core, std_misc, libc, os, rustc_private)]
+#![feature(core, std_misc, libc, fs, os, rustc_private, path)]
 extern crate libc;
 #[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
@@ -10,20 +10,19 @@ extern crate libc;
 mod linux;
 
 #[cfg(target_os = "linux")]
-pub use linux::*;
+pub use linux::{NativeJoystick, scan};
 
 #[cfg(target_os = "windows")]
 mod windows;
 
 #[cfg(target_os = "windows")]
-pub use windows::*;
+pub use windows::NativeJoystick;
+
 
 /// The maximum axis value
 pub static MAX_JOYSTICK_VALUE:i16 = 32767;
 /// The minimum axis value
 pub static MIN_JOYSTICK_VALUE:i16 = -32767;
-
-use std::ops::Deref;
 
 #[derive(Copy, Debug)]
 /// An event from a joystick
@@ -42,59 +41,54 @@ pub trait IntoEvent {
 	fn into_event(self) -> Event;
 }
 
-#[derive(Debug)]
-/// A joystick that tracks its state
-pub struct SmartJoystick {
-	js: Joystick,
-	axes: Vec<i16>,
-	buttons: Vec<bool>
-}
-impl SmartJoystick {
+/// A single joystick
+pub trait Joystick {
+	/// A joystick that includes the state
+	type WithState : StatefulJoystick;
+
 	/// Create a new joystick from its index
-	pub fn new(index: u8) -> Result<SmartJoystick, &'static str> {
-		let js = try!(Joystick::new(index));
-		Ok(SmartJoystick {
-			axes: vec![0; js.get_num_axes() as usize],
-			buttons: vec![false; js.get_num_buttons() as usize],
-			js: js
-		})
-	}
-	/// Poll this joystick for events
-	pub fn poll(&mut self) -> Option<Event> {
-		let event = self.js.poll();
-		match event {
-			Some(Event::JoystickMoved(i, v)) => self.axes[i as usize] = v,
-			Some(Event::ButtonPressed(i)) => self.buttons[i as usize] = true,
-			Some(Event::ButtonReleased(i)) => self.buttons[i as usize] = false,
-			_ => ()
-		}
-		event
-	}
+	fn new(index: u8) -> Result<Self, &'static str>;
+
+	/// Check if the joystick is still connected
+	fn is_connected(&self) -> bool;
+
+	/// Get the identifier of this joystick
+	fn get_id(&self) -> String;
+
+	/// Get the index of this joystick
+	fn get_index(&self) -> u8;
+
+	/// Get the number of axes this joystick has
+	fn get_num_axes(&self) -> u8;
+
+	/// Get the number of buttons this joystick has
+	fn get_num_buttons(&self) -> u8;
+
+	/// Poll the joystick for events in non-blocking mode
+	fn poll(&mut self) -> Option<Event>;
+
+	/// Get a version of this joystick which includes state
+	fn with_state(self) -> Self::WithState;
+}
+
+/// A single joystick with its state saved
+pub trait StatefulJoystick : Joystick {
 	/// Get the value of a specific axis from its index
 	///
 	/// Typically the first two of these are the primary analog stick's x and y
 	/// co-ordinates
-	pub fn get_axis(&self, index: usize) -> Option<i16> {
-		self.axes.get(index).cloned()
-	}
+	fn get_axis(&self, index: u8) -> Option<i16>;
+
 	/// Get the value of a specific axis normalised to between -1.0 and 1.0
-	pub fn get_normalised_axis(&self, index: usize) -> Option<f32> {
+	fn get_normalised_axis(&self, index: u8) -> Option<f32> {
 		self.get_axis(index).map(|v| v as f32 / MAX_JOYSTICK_VALUE as f32)
 	}
+
 	/// Get the value (if it is pressed or not) of a specific button
 	///
 	/// The first two buttons are usually the accept and back buttons
-	pub fn get_button(&self, index: usize) -> Option<bool> {
-		self.buttons.get(index).cloned()
-	}
-	/// Update the joystick's state
-	pub fn update(&mut self) {
-		while let Some(_) = self.poll() {}
-	}
-}
-impl Deref for SmartJoystick {
-	type Target = Joystick;
-	fn deref(&self) -> &Joystick {
-		&self.js
-	}
+	fn get_button(&self, index: u8) -> Option<bool>;
+
+	/// Update the state of this joystick
+	fn update(&mut self);
 }
