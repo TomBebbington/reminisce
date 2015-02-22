@@ -1,7 +1,8 @@
 language: rust
 after_success: |
-    cargo doc \
-    && echo '<meta http-equiv=refresh content=0;url=reminisce/index.html>' > target/doc/index.html && \
+    rm -rf target/doc && \
+    cargo doc && \
+    echo '<meta http-equiv=refresh content=0;url=reminisce/index.html>' > target/doc/index.html && \
     sudo pip install ghp-import && \
     ghp-import -n target/doc && \
     git push -qf https://${TOKEN}@github.com/TomBebbington/reminisce.git gh-pages
