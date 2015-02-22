@@ -11,7 +11,7 @@ extern "stdcall" {
 }
 
 #[repr(C)]
-pub struct JoyInfo {
+struct JoyInfo {
 	x: c_uint,
 	y: c_uint,
 	z: c_uint,
@@ -20,7 +20,7 @@ pub struct JoyInfo {
 
 static MAXPNAMELEN: usize = 32;
 #[repr(C)]
-pub struct JoyCaps {
+struct JoyCaps {
 	man_id: c_uint,
 	product_id: c_uint,
 	product_name: [c_char; 32],
@@ -51,6 +51,7 @@ pub struct Joystick {
 	caps: JoyCaps
 }
 impl Joystick {
+	/// Create a joystick from its index
 	pub fn new(index: u8) -> Result<Joystick, &'static str> {
 		unsafe {
 			let mut info = mem::uninitialized();
@@ -74,28 +75,33 @@ impl Joystick {
 			})
 		}
 	}
+	/// Get the number of axes supported by this joystick
 	pub fn get_num_axes(&self) -> u8 {
 		self.caps.num_axes as u8
 	}
+	/// Get the number of buttons supported by this joystick
 	pub fn get_num_buttons(&self) -> u8 {
 		self.caps.num_buttons as u8
 	}
+	/// Get the product / driver identifier of this joystick
 	pub fn get_id(&self) -> String {
 		unsafe {
 			let name = &self.caps.product_name[..];
 			String::from_utf8_lossy(mem::transmute(name)).into_owned()
 		}
 	}
+	/// Get the index of this joystick
 	pub fn get_index(&self) -> u8 {
 		self.index
 	}
+	/// Check for events in a non-blocking way
 	pub fn poll(&mut self) -> Option<String> {
 		None
 	}
 }
 
 #[repr(C)]
-pub enum MmResult {
+enum MmResult {
 	NoError,
 	Error,
 	BadDeviceId,

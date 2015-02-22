@@ -20,18 +20,21 @@ pub enum Event {
 	ButtonReleased(u8),
 	JoystickMoved(u8, i16)
 }
-/// Convert a raw event into a Reminisice event
+/// Convert a raw event into a Reminisce event
 pub trait IntoEvent {
+	/// Convert this into a Reminisce event
 	fn into_event(self) -> Event;
 }
 
 #[derive(Debug)]
+/// A joystick that tracks its state
 pub struct SmartJoystick {
 	js: Joystick,
 	pub axes: Vec<f32>,
 	pub buttons: Vec<bool>
 }
 impl SmartJoystick {
+	/// Create a new joystick from its index
 	pub fn new(index: u8) -> Result<SmartJoystick, &'static str> {
 		let js = try!(Joystick::new(index));
 		Ok(SmartJoystick {
@@ -51,6 +54,7 @@ impl SmartJoystick {
 		}
 		event
 	}
+	/// Update the joystick's state
 	pub fn update(&mut self) {
 		while let Some(_) = self.poll() {}
 	}

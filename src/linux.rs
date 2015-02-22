@@ -22,12 +22,14 @@ fn os_error() -> &'static str {
 	}
 }
 #[derive(Debug)]
+/// Represents a system joystick
 pub struct Joystick {
 	index: u8,
 	fd: c_int,
 	connected: bool
 }
 impl Joystick {
+	/// Create a joystick from its index
 	pub fn new(index: u8) -> Result<Joystick, &'static str> {
 		let path = format!("/dev/input/js{}", index);
 		unsafe {
@@ -85,7 +87,7 @@ impl Joystick {
 			num_buttons as u8
 		}
 	}
-	/// Get the identifier of this joystick
+	/// Get the product / driver identifier of this joystick
 	pub fn get_id(&self) -> String {
 		unsafe {
 			let text = String::with_capacity(JSIOCGID_LEN);
@@ -101,6 +103,7 @@ impl Joystick {
 	}
 }
 impl Drop for Joystick {
+	/// Close the joystick's file descriptor
 	fn drop(&mut self) {
 		unsafe {
 			if close(self.fd) == -1 {
