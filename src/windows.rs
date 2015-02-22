@@ -3,6 +3,7 @@ use std::mem;
 use std::collections::VecDeque;
 // I tried
 // It's a bit hard to write this without a Windows pc on hand...
+// But this should work on Windows Vista, 7, and 8
 #[link(name = "XINPUT9_1_0")]
 extern "stdcall" {
 	fn XInputGetCapabilities(index: u32, flags: u32, capabilities: *mut Capabilities) -> i32;
@@ -59,6 +60,11 @@ struct Vibration {
 	right_motor_speed: i32
 }
 
+/// Scan for joysticks
+pub fn scan() -> Vec<Joystick> {
+	(0..4).filter_map(|i| Joystick::new(i).ok()).collect()
+}
+
 pub struct NativeJoystick {
 	index: u8,
 	last: Gamepad,
@@ -70,13 +76,17 @@ impl ::Joystick for NativeJoystick {
 	fn new(index: u8) -> Result<NativeJoystick, &'static str> {
 		unsafe {
 			let mut caps: Capabilities = mem::uninitialized();
-			XInputGetCapabilities(index as u32, 0, &mut caps);
-			Ok(NativeJoystick {
-				index: index,
-				last: caps.gamepad,
-				last_packet: 0,
-				events: VecDeque::with_capacity(10)
-			})
+			match XInputGetCapabilities(index as u32, 0, &mut caps) {
+				0 =>
+					Ok(NativeJoystick {
+						index: index,
+						last: caps.gamepad,
+						last_packet: 0,
+						events: VecDeque::with_capacity(10)
+					}),
+
+				_ => Err("Unknown Error")
+			}
 		}
 	}
 	fn poll(&mut self) -> Option<::Event> {

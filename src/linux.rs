@@ -22,6 +22,7 @@ fn os_error() -> &'static str {
 	}
 }
 
+/// Scan for joysticks
 pub fn scan() -> Result<Vec<NativeJoystick>, &'static str> {
 	use std::fs;
 	let mut joysticks = Vec::with_capacity(4);
