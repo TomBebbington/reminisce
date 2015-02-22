@@ -2,6 +2,7 @@ use libc::*;
 use std::mem;
 // I tried
 // It's a bit hard to write this without a Windows pc on hand...
+#[link(name = "XINPUT9_1_0")]
 extern "stdcall" {
 	fn XInputGetCapabilities(index: u32, flags: u32, capabilities: *mut Capabilities) -> i32;
 	fn XInputGetState(index: u32, state: *mut State) -> i32;
@@ -76,8 +77,8 @@ impl ::Joystick for NativeJoystick {
 		self.index
 	}
 }
-impl NativeJoystick {
-	pub fn get_axis(&self, index: usize) -> Option<i16> {
+impl ::StatefulJoystick for NativeJoystick {
+	fn get_axis(&self, index: usize) -> Option<i16> {
 		match index {
 			0 => Some(self.last.thumb_lx),
 			1 => Some(self.last.thumb_ly),
@@ -86,11 +87,7 @@ impl NativeJoystick {
 			_ => None
 		}
 	}
-	/// Get the value of a specific axis normalised to between -1.0 and 1.0
-	pub fn get_normalised_axis(&self, index: usize) -> Option<f32> {
-		self.get_axis(index).map(|v| v as f32 / ::MAX_JOYSTICK_VALUE as f32)
-	}
-	pub fn get_button(&self, index: usize) -> Option<bool> {
+	fn get_button(&self, index: usize) -> Option<bool> {
 		let bits = match index {
 			0 => Some(A),
 			1 => Some(B),
