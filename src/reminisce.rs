@@ -39,23 +39,15 @@ pub trait IntoEvent {
 /// A joystick that tracks its state
 pub struct SmartJoystick {
 	js: Joystick,
-	/// The axes on the joystick, normalised to floats between -1.0 and 1.0
-	///
-	/// Typically the first two of these are the primary analog stick's x and y
-	/// co-ordinates
-	pub axes: Vec<f32>,
-	/// The buttons on the joystick as booleans indicating if they are pressed
-	///
-	/// The order of these usually indicates the button priority with the first
-	/// two being accept and back buttons
-	pub buttons: Vec<bool>
+	axes: Vec<i16>,
+	buttons: Vec<bool>
 }
 impl SmartJoystick {
 	/// Create a new joystick from its index
 	pub fn new(index: u8) -> Result<SmartJoystick, &'static str> {
 		let js = try!(Joystick::new(index));
 		Ok(SmartJoystick {
-			axes: vec![0.0f32; js.get_num_axes() as usize],
+			axes: vec![0; js.get_num_axes() as usize],
 			buttons: vec![false; js.get_num_buttons() as usize],
 			js: js
 		})
@@ -64,12 +56,29 @@ impl SmartJoystick {
 	pub fn poll(&mut self) -> Option<Event> {
 		let event = self.js.poll();
 		match event {
-			Some(Event::JoystickMoved(i, v)) => self.axes[i as usize] = v as f32 / MAX_JOYSTICK_VALUE as f32,
+			Some(Event::JoystickMoved(i, v)) => self.axes[i as usize] = v,
 			Some(Event::ButtonPressed(i)) => self.buttons[i as usize] = true,
 			Some(Event::ButtonReleased(i)) => self.buttons[i as usize] = false,
 			_ => ()
 		}
 		event
+	}
+	/// Get the value of a specific axis from its index
+	///
+	/// Typically the first two of these are the primary analog stick's x and y
+	/// co-ordinates
+	pub fn get_axis(&self, index: usize) -> i16 {
+		self.axes[index]
+	}
+	/// Get the value of a specific axis normalised to between -1.0 and 1.0
+	pub fn get_normalised_axis(&self, index: usize) -> f32 {
+		self.axes[index] as f32 / MAX_JOYSTICK_VALUE as f32
+	}
+	/// Get the value (if it is pressed or not) of a specific button
+	///
+	/// The first two buttons are usually the accept and back buttons
+	pub fn get_button(&self, index: usize) -> bool {
+		self.buttons[index]
 	}
 	/// Update the joystick's state
 	pub fn update(&mut self) {
