@@ -1,11 +1,7 @@
 language: rust
-env:
-  global:
-    - secure: MaupJEtmxoIh2UY2N6O3U5x+kverikrG6k66UlMO7pd1SLdFfB4pmhYje/TO3gCEMFIJtJEK0NhD2QMHyveUd0o86wOhiMNfrO7PBCI0+3rXuE0HdkLXGcd1Lhk+iT7IFwuOzdH60ONfBHHGfkVnFLwcBaAT9rBaKkKMYbcASuU=
-script:
-  - cargo build
-  - cargo test
-  - cargo doc
-after_script:
-  - cp -r target/doc doc
-  - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
+after_success: |
+    cargo doc \
+    && echo '<meta http-equiv=refresh content=0;url=reminisce/index.html>' > target/doc/index.html && \
+    sudo pip install ghp-import && \
+    ghp-import -n target/doc && \
+    git push -qf https://${TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
