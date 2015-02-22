@@ -1,5 +1,6 @@
 use libc::*;
 use std::mem;
+use std::collections::VecDeque;
 // I tried
 // It's a bit hard to write this without a Windows pc on hand...
 #[link(name = "XINPUT9_1_0")]
@@ -10,7 +11,7 @@ extern "stdcall" {
 
 #[repr(C)]
 struct State {
-	packet_number: i32,
+	packet: i32,
 	gamepad: Gamepad
 }
 
@@ -60,25 +61,74 @@ struct Vibration {
 
 pub struct NativeJoystick {
 	index: u8,
-	last: Gamepad
+	last: Gamepad,
+	last_packet: i32,
+	events: VecDeque<::Event>
 }
 impl ::Joystick for NativeJoystick {
+	type WithState = NativeJoystick;
 	fn new(index: u8) -> Result<NativeJoystick, &'static str> {
 		unsafe {
-			let mut caps:Capabilities = mem::uninitialized();
+			let mut caps: Capabilities = mem::uninitialized();
 			XInputGetCapabilities(index as u32, 0, &mut caps);
 			Ok(NativeJoystick {
 				index: index,
-				last: caps.gamepad
+				last: caps.gamepad,
+				last_packet: 0,
+				events: VecDeque::with_capacity(10)
 			})
 		}
+	}
+	fn poll(&mut self) -> Option<::Event> {
+		use ::StatefulJoystick;
+		self.update();
+		self.events.pop_back()
+	}
+	fn is_connected(&self) -> bool {
+		true
+	}
+	fn get_id(&self) -> String {
+		String::from_str("XInput Device")
 	}
 	fn get_index(&self) -> u8 {
 		self.index
 	}
+	fn get_num_buttons(&self) -> u8 {
+		4
+	}
+	fn get_num_axes(&self) -> u8 {
+		4
+	}
+	fn with_state(self) -> NativeJoystick {
+		self
+	}
+}
+macro_rules! event{
+	(button $this:expr, $now:expr, $last:expr, $btn:expr, $id:expr) => (
+		{
+			let now_btn = $now.buttons.contains($btn);
+			let last_btn = $last.buttons.contains($btn);
+			if now_btn && !last_btn {
+				$this.events.push_back(::Event::ButtonPressed($id))
+			} else if !now_btn && last_btn {
+				$this.events.push_back(::Event::ButtonReleased($id))
+			}
+		}
+	);
+	(axis $this:expr, $now:expr, $last:expr, $field:ident, $id:expr) => (
+		if $now.$field != $last.$field {
+			$this.events.push_back(::Event::JoystickMoved($id, $now.$field))
+		}
+	);
+	(axes $this:expr, $now:expr, $last:expr, $($field:ident => $id:expr),+) => ({
+		$(event!(axis $this, $now, $last, $field, $id);)+
+	});
+	(buttons $this:expr, $now:expr, $last:expr, $($btn:ident => $id:expr),+) => ({
+		$(event!(button $this, $now, $last, $btn, $id);)+
+	});
 }
 impl ::StatefulJoystick for NativeJoystick {
-	fn get_axis(&self, index: usize) -> Option<i16> {
+	fn get_axis(&self, index: u8) -> Option<i16> {
 		match index {
 			0 => Some(self.last.thumb_lx),
 			1 => Some(self.last.thumb_ly),
@@ -87,14 +137,39 @@ impl ::StatefulJoystick for NativeJoystick {
 			_ => None
 		}
 	}
-	fn get_button(&self, index: usize) -> Option<bool> {
+	fn get_button(&self, index: u8) -> Option<bool> {
 		let bits = match index {
-			0 => Some(A),
-			1 => Some(B),
-			2 => Some(X),
-			3 => Some(Y),
+			1 => Some(A),
+			2 => Some(B),
+			3 => Some(X),
+			0 => Some(Y),
 			_ => None
 		};
 		bits.map(|v| self.last.buttons.contains(v))
+	}
+	fn update(&mut self) {
+		let state = unsafe {
+			let mut state: State = mem::uninitialized();
+			XInputGetState(self.index as u32, &mut state);
+			state
+		};
+		let now = state.gamepad;
+		if state.packet != self.last_packet {
+			let last = self.last;
+			event!{axes self, now, last,
+				thumb_lx => 0,
+				thumb_ly => 1,
+				thumb_rx => 2,
+				thumb_ry => 3
+			}
+			event!{buttons self, now, last,
+				A => 1,
+				B => 2,
+				X => 3,
+				Y => 0
+			}
+		}
+		self.last_packet = state.packet;
+		self.last = now;
 	}
 }
