@@ -16,6 +16,8 @@ mod windows;
 #[cfg(target_os = "windows")]
 pub use windows::*;
 
+use std::ops::Deref;
+
 #[derive(Copy, Debug)]
 /// An event from a joystick
 pub enum Event {
@@ -37,15 +39,15 @@ pub trait IntoEvent {
 /// A joystick that tracks its state
 pub struct SmartJoystick {
 	js: Joystick,
-	/// The axes on the joystick
+	/// The axes on the joystick, normalised to floats between -1.0 and 1.0
 	///
 	/// Typically the first two of these are the primary analog stick's x and y
 	/// co-ordinates
 	pub axes: Vec<f32>,
-	/// The buttons on the joystick
+	/// The buttons on the joystick as booleans indicating if they are pressed
 	///
-	/// These usually indicate the button priority with the first two being
-	/// accept and back buttons
+	/// The order of these usually indicates the button priority with the first
+	/// two being accept and back buttons
 	pub buttons: Vec<bool>
 }
 impl SmartJoystick {
@@ -74,7 +76,7 @@ impl SmartJoystick {
 		while let Some(_) = self.poll() {}
 	}
 }
-impl ::std::ops::Deref for SmartJoystick {
+impl Deref for SmartJoystick {
 	type Target = Joystick;
 	fn deref(&self) -> &Joystick {
 		&self.js
