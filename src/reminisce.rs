@@ -1,8 +1,10 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
 //! reading from joysticks.
 
-#![feature(core, std_misc, libc, os)]
+#![feature(core, std_misc, libc, os, rustc_private)]
 extern crate libc;
+#[cfg(target_os = "windows")]
+#[macro_use] extern crate rustc_bitflags;
 
 #[cfg(target_os = "linux")]
 mod linux;
@@ -15,6 +17,11 @@ mod windows;
 
 #[cfg(target_os = "windows")]
 pub use windows::*;
+
+/// The maximum axis value
+pub static MAX_JOYSTICK_VALUE:i16 = 32767;
+/// The minimum axis value
+pub static MIN_JOYSTICK_VALUE:i16 = -32767;
 
 use std::ops::Deref;
 
@@ -67,18 +74,18 @@ impl SmartJoystick {
 	///
 	/// Typically the first two of these are the primary analog stick's x and y
 	/// co-ordinates
-	pub fn get_axis(&self, index: usize) -> i16 {
-		self.axes[index]
+	pub fn get_axis(&self, index: usize) -> Option<i16> {
+		self.axes.get(index).cloned()
 	}
 	/// Get the value of a specific axis normalised to between -1.0 and 1.0
-	pub fn get_normalised_axis(&self, index: usize) -> f32 {
-		self.axes[index] as f32 / MAX_JOYSTICK_VALUE as f32
+	pub fn get_normalised_axis(&self, index: usize) -> Option<f32> {
+		self.get_axis(index).map(|v| v as f32 / MAX_JOYSTICK_VALUE as f32)
 	}
 	/// Get the value (if it is pressed or not) of a specific button
 	///
 	/// The first two buttons are usually the accept and back buttons
-	pub fn get_button(&self, index: usize) -> bool {
-		self.buttons[index]
+	pub fn get_button(&self, index: usize) -> Option<bool> {
+		self.buttons.get(index).cloned()
 	}
 	/// Update the joystick's state
 	pub fn update(&mut self) {

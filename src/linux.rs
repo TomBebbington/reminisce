@@ -2,11 +2,6 @@ use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, read, strerror};
 use std::ffi::{CStr, CString};
 use std::{mem, os, str};
 
-/// The maximum axis value
-pub static MAX_JOYSTICK_VALUE:i16 = 32767;
-/// The minimum axis value
-pub static MIN_JOYSTICK_VALUE:i16 = -32767;
-
 static JSIOCGAXES: c_uint = 2147576337;
 static JSIOCGBUTTONS: c_uint = 2147576338;
 static JSIOCGID: c_uint = 2151705107;
