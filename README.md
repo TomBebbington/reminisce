@@ -8,3 +8,5 @@ It does this by using the native platform's raw Joystick API.
 
 It aims to be cross-platform, but currently only supports Linux. However, its
 API is simple and minimal so it is easy to implement.
+
+[Documentation](http://tombebbington.github.io/reminisce/)
