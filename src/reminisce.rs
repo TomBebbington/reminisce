@@ -72,7 +72,7 @@ pub trait Joystick {
 }
 
 /// A single joystick with its state saved
-pub trait StatefulJoystick : Joystick {
+pub trait StatefulJoystick : Joystick + Sized {
 	/// Get the value of a specific axis from its index
 	///
 	/// Typically the first two of these are the primary analog stick's x and y
@@ -84,6 +84,22 @@ pub trait StatefulJoystick : Joystick {
 		self.get_axis(index).map(|v| v as f32 / MAX_JOYSTICK_VALUE as f32)
 	}
 
+	/// Iterate over the axes in this joystick
+	fn axes(&self) -> Axes<Self> {
+		Axes {
+			joystick: self,
+			axis: 0
+		}
+	}
+
+	/// Iterate over the buttons in this joystick
+	fn buttons(&self) -> Buttons<Self> {
+		Buttons {
+			joystick: self,
+			button: 0
+		}
+	}
+
 	/// Get the value (if it is pressed or not) of a specific button
 	///
 	/// The first two buttons are usually the accept and back buttons
@@ -91,4 +107,30 @@ pub trait StatefulJoystick : Joystick {
 
 	/// Update the state of this joystick
 	fn update(&mut self);
+}
+
+/// An iterator over a joystick's axes
+pub struct Axes<'a, J> where J:StatefulJoystick+'a {
+	joystick: &'a J,
+	axis: u8
+}
+impl<'a, J> Iterator for Axes<'a, J> where J:StatefulJoystick {
+	type Item = (u8, i16);
+	fn next(&mut self) -> Option<(u8, i16)> {
+		self.axis = self.axis + 1;
+		self.joystick.get_axis(self.axis - 1).map(|v| (self.axis - 1, v))
+	}
+}
+
+/// An iterator over a joystick's buttons
+pub struct Buttons<'a, J> where J:StatefulJoystick+'a {
+	joystick: &'a J,
+	button: u8
+}
+impl<'a, J> Iterator for Buttons<'a, J> where J:StatefulJoystick {
+	type Item = (u8, bool);
+	fn next(&mut self) -> Option<(u8, bool)> {
+		self.button = self.button + 1;
+		self.joystick.get_button(self.button - 1).map(|v| (self.button - 1, v))
+	}
 }
