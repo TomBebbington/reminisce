@@ -6,17 +6,26 @@ extern crate libc;
 #[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
 
+/// Someday, somehow
+#[cfg(target_os = "emscripten")]
+mod emscripten;
+
+#[cfg(target_os = "emscripten")]
+pub use emscripten as native;
+
 #[cfg(target_os = "linux")]
 mod linux;
 
 #[cfg(target_os = "linux")]
-pub use linux::{NativeJoystick, scan};
+pub use linux as native;
 
 #[cfg(target_os = "windows")]
 mod windows;
 
 #[cfg(target_os = "windows")]
-pub use windows::NativeJoystick;
+pub use windows as native;
+
+pub use native::{NativeJoystick, scan};
 
 
 /// The maximum axis value

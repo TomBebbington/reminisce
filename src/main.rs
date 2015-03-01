@@ -1,7 +1,7 @@
 extern crate reminisce;
 use reminisce::*;
 fn main() {
-	let joysticks = scan().unwrap();
+	let joysticks = scan();
 	let mut joysticks:Vec<_> = joysticks.into_iter().map(|v| v.with_state()).collect();
 	for js in &joysticks {
 		println!("Joystick #{}: {}", js.get_index(), js.get_id());

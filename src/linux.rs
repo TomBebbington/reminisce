@@ -23,7 +23,7 @@ fn os_error() -> &'static str {
 }
 
 /// Scan for joysticks
-pub fn scan() -> Result<Vec<NativeJoystick>, &'static str> {
+pub fn scan() -> Vec<NativeJoystick> {
 	use std::fs;
 	let mut joysticks = Vec::with_capacity(4);
 	for entry in fs::walk_dir("/dev/input/").unwrap() {
@@ -33,16 +33,14 @@ pub fn scan() -> Result<Vec<NativeJoystick>, &'static str> {
 				let name = name.to_str().unwrap();
 				if name.starts_with("js") {
 					let index = name[2..].parse().unwrap();
-					match Joystick::new(index) {
-						Ok(js) => joysticks.push(js),
-						Err(_) if joysticks.len() > 0 => (),
-						Err(err) => return Err(err)
+					if let Ok(js) = Joystick::new(index) {
+						joysticks.push(js)
 					}
 				}
 			}
 		}
 	}
-	Ok(joysticks)
+	joysticks
 }
 
 /// Represents a system joystick

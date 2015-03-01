@@ -61,7 +61,7 @@ struct Vibration {
 }
 
 /// Scan for joysticks
-pub fn scan() -> Vec<Joystick> {
+pub fn scan() -> Vec<NativeJoystick> {
 	(0..4).filter_map(|i| Joystick::new(i).ok()).collect()
 }
 
