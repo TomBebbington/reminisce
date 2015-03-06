@@ -189,10 +189,10 @@ impl ::Joystick for StatefulNativeJoystick {
 	}
 }
 impl ::StatefulJoystick for StatefulNativeJoystick {
-	fn get_axis(&self, index: u8) -> Option<i16> {
+	fn get_axis(&self, index: ::Axis) -> Option<i16> {
 		self.axes.get(index as usize).cloned()
 	}
-	fn get_button(&self, index: u8) -> Option<bool> {
+	fn get_button(&self, index: ::Button) -> Option<bool> {
 		self.buttons.get(index as usize).cloned()
 	}
 	fn update(&mut self) {
@@ -213,10 +213,11 @@ struct LinuxEvent {
 }
 impl ::IntoEvent for LinuxEvent {
 	fn into_event(self) -> ::Event {
+		use std::mem::transmute as cast;
 		match (self._type, self.value) {
-			(1, 0) => ::Event::ButtonReleased(self.number),
-			(1, 1) => ::Event::ButtonPressed(self.number),
-			(2, _) => ::Event::JoystickMoved(self.number, self.value),
+			(1, 0) => ::Event::ButtonReleased(unsafe { cast(self.number) }),
+			(1, 1) => ::Event::ButtonPressed(unsafe { cast(self.number) }),
+			(2, _) => ::Event::JoystickMoved(unsafe { cast(self.number) }, self.value),
 			_ => panic!("Bad type and value {} {} for joystick", self._type, self.value)
 		}
 	}

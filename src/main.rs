@@ -15,8 +15,8 @@ fn main() {
 		for js in &mut joysticks {
 			if let Some(event) = js.poll() {
 				match event {
-					Event::ButtonPressed(1) =>
-						println!("({:?}, {:?})", js.get_normalised_axis(0).unwrap(), js.get_normalised_axis(1).unwrap()),
+					Event::ButtonPressed(Button::A) =>
+						println!("({:?}, {:?})", js.get_normalised_axis(Axis::LeftX).unwrap(), js.get_normalised_axis(Axis::LeftY).unwrap()),
 					_ =>
 						println!("{:?}", event)
 				}

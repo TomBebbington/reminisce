@@ -1,9 +1,9 @@
 [package]
 name = "reminisce"
-version = "0.0.6"
+version = "0.0.7"
 authors = ["Tom Bebbington <tophattedcoder@gmail.com>"]
 description = "A joystick detection and event-handling library"
-documentation = "http://tombebbington.github.io/reminisce/"
+documentation = "http://www.rustdox.com/TomBebbington/reminisce/reminisce/"
 keywords = [ "joystick", "gamepad", "input" ]
 license = "MIT"
 
@@ -13,3 +13,12 @@ name = "reminisce"
 [[bin]]
 name = "main"
 path = "src/main.rs"
+
+[features]
+sdl = [ "sdl2" ]
+default = []
+
+
+[dependencies.sdl2]
+version = "*"
+optional = true

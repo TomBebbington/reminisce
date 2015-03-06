@@ -6,6 +6,9 @@ extern crate libc;
 #[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
 
+#[cfg(feature = "sdl")]
+extern crate sdl2;
+
 /// Someday, somehow
 #[cfg(target_os = "emscripten")]
 mod emscripten;
@@ -25,6 +28,12 @@ mod windows;
 #[cfg(target_os = "windows")]
 pub use windows as native;
 
+#[cfg(feature = "sdl")]
+mod sdl;
+
+#[cfg(feature = "sdl")]
+pub use sdl as native;
+
 pub use native::{NativeJoystick, scan};
 
 
@@ -33,16 +42,72 @@ pub static MAX_JOYSTICK_VALUE:i16 = 32767;
 /// The minimum axis value
 pub static MIN_JOYSTICK_VALUE:i16 = -32767;
 
-#[derive(Copy, Debug)]
+use std::mem::transmute as cast;
+
+#[repr(u8)]
+#[derive(Copy, Debug, PartialEq, Eq)]
+/// A direction on a joystick
+pub enum Axis {
+	/// The x direction of the left stick
+  LeftX,
+	/// The y direction of the left stick
+  LeftY,
+	/// The x direction of the right stick
+  RightX,
+	/// The y direction of the right stick
+  RightY,
+	/// How far down the left trigger is pressed
+  TriggerLeft,
+	/// How far down the right trigger is pressed
+  TriggerRight,
+}
+
+#[repr(u8)]
+#[derive(Copy, Debug, PartialEq, Eq)]
+/// A button on a joystick
+pub enum Button {
+	/// The A button - typically used for jumping
+	A,
+	/// The B button - typically used for shooting
+	B,
+	/// The X button
+	X,
+	/// The Y button
+	Y,
+	/// The back / select button
+	Back,
+	/// The guide button
+	Guide,
+	/// The start button
+	Start,
+	/// The left stick button
+	LeftStick,
+	/// The right stick button
+	RightStick,
+	/// The left shoulder button
+	LeftShoulder,
+	/// The right shoulder button
+	RightShoulder,
+	/// The up button on the directional pad
+	DPadUp,
+	/// The down button on the directional pad
+	DPadDown,
+	/// The left button on the directional pad
+	DPadLeft,
+	/// The right button on the directional pad
+	DPadRight
+}
+
+#[derive(Copy, Debug, Eq, PartialEq)]
 /// An event from a joystick
 pub enum Event {
 	/// Fires when a button is pressed with the button's index
-	ButtonPressed(u8),
+	ButtonPressed(Button),
 	/// Fires when a button is released with the button's index
-	ButtonReleased(u8),
+	ButtonReleased(Button),
 	/// Fires when a joystick / axis is moved with the axis index and its value,
 	/// which is between MIN_JOYSTICK_VALUE and MAX_JOYSTICK_VALUE
-	JoystickMoved(u8, i16)
+	JoystickMoved(Axis, i16)
 }
 /// Convert a raw event into a Reminisce event
 pub trait IntoEvent {
@@ -86,33 +151,35 @@ pub trait StatefulJoystick : Joystick + Sized {
 	///
 	/// Typically the first two of these are the primary analog stick's x and y
 	/// co-ordinates
-	fn get_axis(&self, index: u8) -> Option<i16>;
+	fn get_axis(&self, index: Axis) -> Option<i16>;
 
 	/// Get the value of a specific axis normalised to between -1.0 and 1.0
-	fn get_normalised_axis(&self, index: u8) -> Option<f32> {
+	fn get_normalised_axis(&self, index: Axis) -> Option<f32> {
 		self.get_axis(index).map(|v| v as f32 / MAX_JOYSTICK_VALUE as f32)
 	}
 
 	/// Iterate over the axes in this joystick
 	fn axes(&self) -> Axes<Self> {
+		use std::mem;
 		Axes {
 			joystick: self,
-			axis: 0
+			axis: unsafe { mem::zeroed() }
 		}
 	}
 
 	/// Iterate over the buttons in this joystick
 	fn buttons(&self) -> Buttons<Self> {
+		use std::mem;
 		Buttons {
 			joystick: self,
-			button: 0
+			button: unsafe { mem::zeroed() }
 		}
 	}
 
 	/// Get the value (if it is pressed or not) of a specific button
 	///
 	/// The first two buttons are usually the accept and back buttons
-	fn get_button(&self, index: u8) -> Option<bool>;
+	fn get_button(&self, index: Button) -> Option<bool>;
 
 	/// Update the state of this joystick
 	fn update(&mut self);
@@ -124,10 +191,11 @@ pub struct Axes<'a, J> where J:StatefulJoystick+'a {
 	axis: u8
 }
 impl<'a, J> Iterator for Axes<'a, J> where J:StatefulJoystick {
-	type Item = (u8, i16);
-	fn next(&mut self) -> Option<(u8, i16)> {
-		self.axis = self.axis + 1;
-		self.joystick.get_axis(self.axis - 1).map(|v| (self.axis - 1, v))
+	type Item = (Axis, i16);
+	fn next(&mut self) -> Option<(Axis, i16)> {
+		self.axis += 1;
+		let axis = unsafe { cast(self.axis - 1) };
+		self.joystick.get_axis(axis).map(|v| (axis, v))
 	}
 }
 
@@ -137,9 +205,10 @@ pub struct Buttons<'a, J> where J:StatefulJoystick+'a {
 	button: u8
 }
 impl<'a, J> Iterator for Buttons<'a, J> where J:StatefulJoystick {
-	type Item = (u8, bool);
-	fn next(&mut self) -> Option<(u8, bool)> {
-		self.button = self.button + 1;
-		self.joystick.get_button(self.button - 1).map(|v| (self.button - 1, v))
+	type Item = (Button, bool);
+	fn next(&mut self) -> Option<(Button, bool)> {
+		self.button += 1;
+		let button = unsafe { cast(self.button - 1) };
+		self.joystick.get_button(button).map(|v| (button, v))
 	}
 }
