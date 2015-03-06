@@ -10,10 +10,6 @@ license = "MIT"
 [lib]
 name = "reminisce"
 
-[[bin]]
-name = "main"
-path = "src/main.rs"
-
 [features]
 sdl = [ "sdl2" ]
 default = []
