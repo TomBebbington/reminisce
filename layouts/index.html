@@ -1,0 +1,18 @@
+{{ partial "head.html" . }}
+<div class="site-wrap">
+  {{ partial "header.html" . }}
+
+  {{ if isset .Site.Params "description" }}
+  <meta name="description" content="{{ .Site.Params.description }}">
+  {{ end }}
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="home">
+          <article class="post-content">
+              
+          {{ partial "front.html" . }}
+          </article>
+      </div>
+  </div>
+</div>
+{{ partial "footer.html" . }}

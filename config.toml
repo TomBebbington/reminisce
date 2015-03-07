@@ -1,0 +1,9 @@
+baseurl = "http://tombebbington.github.io/reminisce/"
+languageCode = "en-gb"
+title = "Reminisce"
+theme = "pixyll"
+buildDrafts = true
+canonifyurls = true
+[params]
+  description = "A Joystick input library for Rust"
+  author = "Tom Bebbington"

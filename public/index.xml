@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+      <title> on Reminisce </title>
+      <generator uri="https://gohugo.io">Hugo</generator>
+    <link>http://tombebbington.github.io/reminisce/</link>
+    <language>en-gb</language>
+    
+    
+    <updated>Sat, 07 Mar 2015 19:47:18 UTC</updated>
+    
+    <item>
+      <title>Tutorial</title>
+      <link>http://tombebbington.github.io/reminisce/tutorial/</link>
+      <pubDate>Sat, 07 Mar 2015 19:47:18 UTC</pubDate>
+      
+      <guid>http://tombebbington.github.io/reminisce/tutorial/</guid>
+      <description>Setting up To get started using Reminisce, add the following to your Cargo.toml: [dependencies.reminisce] git = &amp;quot;https://github.com/TomBebbington/reminisce&amp;quot; If you are using SDL, you should enable the sdl feature by adding the following: features = [ &amp;quot;sdl&amp;quot; ] This will make reminisce wrap SDL&amp;rsquo;s joystick API instead of needlessly re-inventing the wheel. Coding If it does not exist already, create a main.rs and add the following to it: extern crate reminisce; use reminisce::*; This pulls in the Reminisce library and imports its contents so you can use the names without using the full paths.</description>
+    </item>
+    
+  </channel>
+</rss>
+
