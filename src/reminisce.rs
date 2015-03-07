@@ -122,11 +122,12 @@ impl IntoEvent for Event {
 }
 
 /// A single joystick
-pub trait Joystick {
+pub trait Joystick : Sized {
 	/// A joystick that includes the state
 	type WithState : StatefulJoystick;
-  /// The event that this joystick processes
-  type NativeEvent: IntoEvent;
+
+    /// The event that this joystick processes
+    type NativeEvent: IntoEvent;
 
 	/// Create a new joystick from its index
 	fn new(index: u8) -> Result<Self, &'static str>;
@@ -146,16 +147,29 @@ pub trait Joystick {
 	/// Get the number of buttons this joystick has
 	fn get_num_buttons(&self) -> u8;
 
-  /// Poll the joystick for events in non-blocking mode
+    /// Poll the joystick for events in non-blocking mode
 	fn poll_native(&mut self) -> Option<Self::NativeEvent>;
 
-  /// Poll the joystick for events in non-blocking mode
-  fn poll(&mut self) -> Option<Event> {
-    self.poll_native().map(|e| e.into_event())
-  }
+    /// Poll the joystick for events in non-blocking mode
+    fn poll(&mut self) -> Option<Event> {
+        self.poll_native().map(|e| e.into_event())
+    }
+
+    /// Iterate through the joystick's event queue in non-blocking mode
+    fn iter(&mut self) -> Poller<Self> {
+        Poller {
+            joystick: self
+        }
+    }
 
 	/// Get a version of this joystick which includes state
 	fn with_state(self) -> Self::WithState;
+}
+impl Iterator for NativeJoystick {
+    type Item = Event;
+    fn next(&mut self) -> Option<Event> {
+        self.poll()
+    }
 }
 
 /// A single joystick with its state saved
@@ -223,5 +237,17 @@ impl<'a, J> Iterator for Buttons<'a, J> where J:StatefulJoystick {
 		self.button += 1;
 		let button = unsafe { cast(self.button - 1) };
 		self.joystick.get_button(button).map(|v| (button, v))
+	}
+}
+
+/// An iterator over a joystick's event queue
+pub struct Poller<'a, J> where J:Joystick+'a {
+    joystick: &'a mut J
+}
+
+impl<'a, J> Iterator for Poller<'a, J> where J:Joystick {
+	type Item = Event;
+	fn next(&mut self) -> Option<Event> {
+		self.joystick.poll()
 	}
 }

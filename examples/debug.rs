@@ -12,15 +12,8 @@ fn main() {
 		panic!("No joysticks plugged in")
 	}
 	loop {
-		for js in &mut joysticks {
-			if let Some(event) = js.poll() {
-				match event {
-					Event::ButtonPressed(Button::A) =>
-						println!("({:?}, {:?})", js.get_normalised_axis(Axis::LeftX).unwrap(), js.get_normalised_axis(Axis::LeftY).unwrap()),
-					_ =>
-						println!("{:?}", event)
-				}
-			}
+		for event in joysticks.iter_mut().flat_map(|js| js.iter()) {
+			println!("{:?}", event)
 		}
 	}
 }
