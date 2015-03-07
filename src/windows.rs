@@ -62,7 +62,7 @@ struct Vibration {
 
 /// Scan for joysticks
 pub fn scan() -> Vec<NativeJoystick> {
-	(0..4).filter_map(|i| Joystick::new(i).ok()).collect()
+	(0..4).filter_map(|i| ::Joystick::new(i).ok()).collect()
 }
 
 pub struct NativeJoystick {
@@ -98,7 +98,7 @@ impl ::Joystick for NativeJoystick {
 		true
 	}
 	fn get_id(&self) -> String {
-		String::from_str("XInput Device")
+		"XInput Device".to_string()
 	}
 	fn get_index(&self) -> u8 {
 		self.index
@@ -138,27 +138,27 @@ macro_rules! event{
 	});
 }
 impl ::StatefulJoystick for NativeJoystick {
-	fn get_axis(&self, index: u8) -> Option<i16> {
+	fn get_axis(&self, index: ::Axis) -> Option<i16> {
 		match index {
-			0 => Some(self.last.thumb_lx),
-			1 => Some(self.last.thumb_ly),
-			2 => Some(self.last.thumb_rx),
-			3 => Some(self.last.thumb_ry),
+			::Axis::LeftX => Some(self.last.thumb_lx),
+			::Axis::LeftY => Some(self.last.thumb_ly),
+			::Axis::RightX => Some(self.last.thumb_rx),
+			::Axis::RightY => Some(self.last.thumb_ry),
 			_ => None
 		}
 	}
-	fn get_button(&self, index: u8) -> Option<bool> {
+	fn get_button(&self, index: ::Button) -> Option<bool> {
 		let bits = match index {
-		0 => Some(Y),
-			1 => Some(A),
-			2 => Some(B),
-			3 => Some(X),
-			4 => Some(LEFT_SHOULDER),
-			5 => Some(RIGHT_SHOULDER),
-			8 => Some(BACK),
-			9 => Some(START),
-			10 => Some(LEFT_TRIGGER),
-			11 => Some(RIGHT_TRIGGER),
+			::Button::A => Some(A),
+			::Button::B => Some(B),
+			::Button::X => Some(X),
+			::Button::Y => Some(Y),
+			::Button::LeftShoulder => Some(LEFT_SHOULDER),
+			::Button::RightShoulder => Some(RIGHT_SHOULDER),
+			::Button::Back => Some(BACK),
+			::Button::Guide => Some(START),
+			::Button::LeftStick => Some(LEFT_THUMB),
+			::Button::RightStick => Some(RIGHT_THUMB),
 			_ => None
 		};
 		bits.map(|v| self.last.buttons.contains(v))
@@ -173,22 +173,22 @@ impl ::StatefulJoystick for NativeJoystick {
 		if state.packet != self.last_packet {
 			let last = self.last;
 			event!{axes self, now, last,
-				thumb_lx => 0,
-				thumb_ly => 1,
-				thumb_rx => 2,
-				thumb_ry => 3
+				thumb_lx => ::Axis::LeftX,
+				thumb_ly => ::Axis::LeftY,
+				thumb_rx => ::Axis::RightX,
+				thumb_ry => ::Axis::RightY
 			}
 			event!{buttons self, now, last,
-			Y => 0,
-				A => 1,
-				B => 2,
-				X => 3,
-				LEFT_SHOULDER => 4,
-				RIGHT_SHOULDER => 5,
-				BACK => 8,
-				START => 9,
-				LEFT_TRIGGER => 10,
-				RIGHT_TRIGGER => 11
+				A => ::Button::A,
+				B => ::Button::B,
+				X => ::Button::X,
+				Y => ::Button::Y,
+				LEFT_SHOULDER => ::Button::LeftShoulder,
+				RIGHT_SHOULDER => ::Button::RightShoulder,
+				BACK => ::Button::Back,
+				START => ::Button::Guide,
+				LEFT_THUMB => ::Button::LeftStick,
+				RIGHT_THUMB => ::Button::RightStick
 			}
 		}
 		self.last_packet = state.packet;
