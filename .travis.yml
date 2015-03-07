@@ -1,5 +1,0 @@
-language: rust
-after_success: |
-    rm -rf target/doc && \
-    cargo doc && \
-    curl -X POST -H "Github:TomBebbington/reminisce" http://www.rustdox.com
