@@ -4,6 +4,7 @@ version = "0.0.9"
 authors = ["Tom Bebbington <tophattedcoder@gmail.com>"]
 description = "A joystick detection and event-handling library"
 documentation = "http://www.rustdox.com/TomBebbington/reminisce/reminisce/"
+homepage = "http://tombebbington.github.io/reminisce/"
 keywords = [ "joystick", "gamepad", "input" ]
 license = "MIT"
 
