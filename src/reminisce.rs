@@ -43,6 +43,7 @@ pub static MAX_JOYSTICK_VALUE:i16 = 32767;
 pub static MIN_JOYSTICK_VALUE:i16 = -32767;
 
 use std::mem::transmute as cast;
+use std::borrow::Cow;
 
 #[repr(u8)]
 #[derive(Copy, Debug, PartialEq, Eq)]
@@ -136,7 +137,9 @@ pub trait Joystick : Sized {
 	fn is_connected(&self) -> bool;
 
 	/// Get the identifier of this joystick
-	fn get_id(&self) -> String;
+    ///
+    /// This is a cow because it can be a String
+	fn get_id(&self) -> Cow<str>;
 
 	/// Get the index of this joystick
 	fn get_index(&self) -> u8;

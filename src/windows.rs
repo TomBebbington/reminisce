@@ -1,6 +1,8 @@
 use libc::*;
-use std::mem;
+
+use std::borrow::{Cow, IntoCow};
 use std::collections::VecDeque;
+use std::mem;
 // I tried
 // It's a bit hard to write this without a Windows pc on hand...
 // But this should work on Windows Vista, 7, and 8
@@ -98,8 +100,8 @@ impl ::Joystick for NativeJoystick {
 	fn is_connected(&self) -> bool {
 		true
 	}
-	fn get_id(&self) -> String {
-		"XInput Device".to_string()
+	fn get_id(&self) -> Cow<str> {
+		"XInput Device".into_cow()
 	}
 	fn get_index(&self) -> u8 {
 		self.index

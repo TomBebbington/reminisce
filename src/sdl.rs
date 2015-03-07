@@ -1,6 +1,8 @@
 use sdl2::joystick::*;
 use sdl2::event::Event;
 use sdl2::{init, Sdl, INIT_GAME_CONTROLLER, INIT_EVENTS};
+
+use std::borrow::{Cow, IntoCow};
 use std::rc::Rc;
 
 /// A native joystick using SDL
@@ -61,8 +63,8 @@ impl ::Joystick for NativeJoystick {
   fn get_index(&self) -> u8 {
     self.js.get_instance_id().unwrap() as u8
   }
-  fn get_id(&self) -> String {
-    self.js.name()
+  fn get_id(&self) -> Cow<str> {
+    self.js.name().into_cow()
   }
   fn get_num_buttons(&self) -> u8 {
     self.js.get_num_buttons().unwrap() as u8

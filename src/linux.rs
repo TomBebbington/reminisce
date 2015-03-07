@@ -1,4 +1,5 @@
 use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, read, strerror};
+use std::borrow::{Cow, IntoCow};
 use std::ffi::{CStr, CString};
 use std::{mem, os, str};
 use Joystick;
@@ -109,13 +110,13 @@ impl ::Joystick for NativeJoystick {
 			num_buttons as u8
 		}
 	}
-	fn get_id(&self) -> String {
+	fn get_id(&self) -> Cow<str> {
 		unsafe {
 			let text = String::with_capacity(JSIOCGID_LEN);
 			ioctl(self.fd as u32, JSIOCGID, text.as_ptr() as *mut i8);
 			let new_text = String::from_raw_parts(text.as_ptr() as *mut u8, JSIOCGID_LEN, JSIOCGID_LEN);
 			mem::forget(text);
-			new_text
+			new_text.into_cow()
 		}
 	}
 	fn get_index(&self) -> u8 {
@@ -163,7 +164,7 @@ impl ::Joystick for StatefulNativeJoystick {
 	fn is_connected(&self) -> bool {
 		self.js.is_connected()
 	}
-	fn get_id(&self) -> String {
+	fn get_id(&self) -> Cow<str> {
 		self.js.get_id()
 	}
 	fn get_index(&self) -> u8 {
