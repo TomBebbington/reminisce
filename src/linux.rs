@@ -52,6 +52,7 @@ pub struct NativeJoystick {
 
 impl ::Joystick for NativeJoystick {
 	type WithState = StatefulNativeJoystick;
+	type NativeEvent = LinuxEvent;
 	/// This tries to open the interface `/dev/input/js...` and will return the
 	/// OS-level error if it fails to open this
 	fn new(index: u8) -> Result<NativeJoystick, &'static str> {
@@ -72,8 +73,7 @@ impl ::Joystick for NativeJoystick {
 	}
 	/// This reads from the interface in non-blocking mode and converts the native
 	/// event into a Reminisce event
-	fn poll(&mut self) -> Option<::Event> {
-		use ::IntoEvent;
+	fn poll_native(&mut self) -> Option<LinuxEvent> {
 		unsafe {
 			let mut event:LinuxEvent = mem::uninitialized();
 			loop {
@@ -87,7 +87,7 @@ impl ::Joystick for NativeJoystick {
 					}
 					return None
 				} else if event._type & 0x80 == 0 {
-					return Some(event.into_event())
+					return Some(event)
 				}
 			}
 		}
@@ -155,6 +155,7 @@ impl StatefulNativeJoystick {
 }
 impl ::Joystick for StatefulNativeJoystick {
 	type WithState = StatefulNativeJoystick;
+	type NativeEvent = LinuxEvent;
 	fn new(index: u8) -> Result<StatefulNativeJoystick, &'static str> {
 		let js = try!(::Joystick::new(index));
 		Ok(StatefulNativeJoystick::wrap(js))
@@ -173,6 +174,9 @@ impl ::Joystick for StatefulNativeJoystick {
 	}
 	fn get_num_buttons(&self) -> u8 {
 		self.js.get_num_buttons()
+	}
+	fn poll_native(&mut self) -> Option<LinuxEvent> {
+		self.js.poll_native()
 	}
 	fn poll(&mut self) -> Option<::Event> {
 		let event = self.js.poll();
@@ -201,7 +205,7 @@ impl ::StatefulJoystick for StatefulNativeJoystick {
 }
 
 #[repr(C)]
-struct LinuxEvent {
+pub struct LinuxEvent {
 	/// timestamp in milleseconds
 	time: u32,
 	/// value

@@ -115,10 +115,18 @@ pub trait IntoEvent {
 	fn into_event(self) -> Event;
 }
 
+impl IntoEvent for Event {
+  fn into_event(self) -> Event {
+    self
+  }
+}
+
 /// A single joystick
 pub trait Joystick {
 	/// A joystick that includes the state
 	type WithState : StatefulJoystick;
+  /// The event that this joystick processes
+  type NativeEvent: IntoEvent;
 
 	/// Create a new joystick from its index
 	fn new(index: u8) -> Result<Self, &'static str>;
@@ -138,8 +146,13 @@ pub trait Joystick {
 	/// Get the number of buttons this joystick has
 	fn get_num_buttons(&self) -> u8;
 
-	/// Poll the joystick for events in non-blocking mode
-	fn poll(&mut self) -> Option<Event>;
+  /// Poll the joystick for events in non-blocking mode
+	fn poll_native(&mut self) -> Option<Self::NativeEvent>;
+
+  /// Poll the joystick for events in non-blocking mode
+  fn poll(&mut self) -> Option<Event> {
+    self.poll_native().map(|e| e.into_event())
+  }
 
 	/// Get a version of this joystick which includes state
 	fn with_state(self) -> Self::WithState;

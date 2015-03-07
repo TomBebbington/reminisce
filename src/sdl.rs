@@ -17,6 +17,27 @@ impl NativeJoystick {
   }
 }
 
+impl IntoEvent for Event {
+  fn into_event(self) -> ::Event {
+    use std::mem::transmute as cast;
+    match event {
+      Event::JoyAxisMotion {axis_idx, value, ..} => {
+        let index = unsafe { cast(axis_idx) };
+        ::Event::JoystickMoved(index, value)
+      },
+      Event::JoyButtonDown {button_idx, ..} => {
+        let index = unsafe { cast(button_idx) };
+        ::Event::ButtonPressed(index)
+      },
+      Event::JoyButtonUp {button_idx, ..} => {
+        let index = unsafe { cast(button_idx) };
+        ::Event::ButtonReleased(index)
+      },
+      _ => unexpected!()
+    }
+  }
+}
+
 /// Scan for joysticks and initialise SDL
 pub fn scan() -> Vec<NativeJoystick> {
   let flags = INIT_GAME_CONTROLLER | INIT_EVENTS;
@@ -27,6 +48,7 @@ pub fn scan() -> Vec<NativeJoystick> {
 
 impl ::Joystick for NativeJoystick {
   type WithState = NativeJoystick;
+  type NativeEvent = Event;
   fn new(index: u8) -> Result<NativeJoystick, &'static str> {
     match Joystick::open(index as i32) {
       Ok(js) => Ok(NativeJoystick {js: js, sdl: None}),
@@ -48,7 +70,7 @@ impl ::Joystick for NativeJoystick {
   fn get_num_axes(&self) -> u8 {
     self.js.get_num_axis().unwrap() as u8
   }
-  fn poll(&mut self) -> Option<::Event> {
+  fn poll_native(&mut self) -> Option<::Event> {
     if self.sdl.is_none() {
       let flags = INIT_GAME_CONTROLLER | INIT_EVENTS;
       self.sdl = Some(Rc::new(init(flags).unwrap()))
@@ -58,21 +80,13 @@ impl ::Joystick for NativeJoystick {
     for event in pump.poll_iter() {
       use std::mem;
       match event {
-        Event::JoyAxisMotion {axis_idx, value, ..} => {
-          let index = unsafe { mem::transmute(axis_idx) };
-          return Some(::Event::JoystickMoved(index, value))
-        },
-        Event::JoyButtonDown {button_idx, ..} => {
-          let index = unsafe { mem::transmute(button_idx) };
-          return Some(::Event::ButtonPressed(index))
-        },
-        Event::JoyButtonUp {button_idx, ..} => {
-          let index = unsafe { mem::transmute(button_idx) };
-          return Some(::Event::ButtonReleased(index))
+        Event::JoyAxisMotion(_) | Event::JoyButtonDown(_) | Event::JoyButtonUp(_) => {
+          return Some(event.into_event())
         },
         _ => ()
       }
     }
+
     None
   }
   fn with_state(self) -> NativeJoystick {

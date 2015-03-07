@@ -73,6 +73,7 @@ pub struct NativeJoystick {
 }
 impl ::Joystick for NativeJoystick {
 	type WithState = NativeJoystick;
+	type NativeEvent = ::Event;
 	fn new(index: u8) -> Result<NativeJoystick, &'static str> {
 		unsafe {
 			let mut caps: Capabilities = mem::uninitialized();
@@ -89,7 +90,7 @@ impl ::Joystick for NativeJoystick {
 			}
 		}
 	}
-	fn poll(&mut self) -> Option<::Event> {
+	fn poll_native(&mut self) -> Option<::Event> {
 		use ::StatefulJoystick;
 		self.update();
 		self.events.pop_back()
