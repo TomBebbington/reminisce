@@ -1,4 +1,6 @@
-# Reminisce [![Build Status](https://travis-ci.org/TomBebbington/reminisce.svg?branch=master)](https://travis-ci.org/TomBebbington/reminisce)
+# Reminisce
+[![Build Status](https://travis-ci.org/TomBebbington/reminisce.svg?branch=master)](https://travis-ci.org/TomBebbington/reminisce)
+[![Gitter Chat](https://badges.gitter.im/TomBebbington/reminisce.png)](https://gitter.im/TomBebbington/reminisce)
 
 ~~rusted joy, geddit?~~
 
