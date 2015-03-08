@@ -19,7 +19,7 @@ If you are using SDL, you should enable the `sdl` feature by adding the followin
 features = [ "sdl" ]
 ```
 This will make reminisce wrap SDL's joystick API instead of needlessly
-re-inventing the wheel.
+re-inventing the wheel by wrapping the native joystick API by itself.
 
 ## Coding
 
