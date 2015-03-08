@@ -123,6 +123,10 @@ impl ::Joystick for NativeJoystick {
 	fn get_index(&self) -> u8 {
 		self.index
 	}
+	/// This is not supported on Linux so None is returned every time
+	fn get_battery(&self) -> Option<f32> {
+		None
+	}
 	fn with_state(self) -> StatefulNativeJoystick {
 		StatefulNativeJoystick::wrap(self)
 	}
@@ -176,6 +180,9 @@ impl ::Joystick for StatefulNativeJoystick {
 	}
 	fn get_num_buttons(&self) -> u8 {
 		self.js.get_num_buttons()
+	}
+	fn get_battery(&self) -> Option<f32> {
+		None
 	}
 	fn poll_native(&mut self) -> Option<LinuxEvent> {
 		self.js.poll_native()

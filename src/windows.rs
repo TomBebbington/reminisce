@@ -1,5 +1,3 @@
-use libc::*;
-
 use std::borrow::{Cow, IntoCow};
 use std::collections::VecDeque;
 use std::mem;
@@ -10,6 +8,31 @@ use std::mem;
 extern "stdcall" {
 	fn XInputGetCapabilities(index: u32, flags: u32, capabilities: *mut Capabilities) -> i32;
 	fn XInputGetState(index: u32, state: *mut State) -> i32;
+	fn XInputGetBatteryInformation(index: u32, ty: u8, information: *mut Battery) -> i32;
+
+}
+
+#[repr(u8)]
+enum BatteryLevel {
+	Empty,
+	Low,
+	Medium,
+	High
+}
+
+#[repr(u8)]
+enum BatteryType {
+	Disconnected,
+	Wired,
+	Alkaline,
+	Nimh,
+	Unknown = 0xFF
+}
+
+#[repr(C)]
+struct Battery {
+	_type: BatteryType,
+	level: BatteryLevel
 }
 
 #[repr(C)]
@@ -99,6 +122,23 @@ impl ::Joystick for NativeJoystick {
 	}
 	fn is_connected(&self) -> bool {
 		true
+	}
+	fn get_battery(&self) -> Option<f32> {
+		unsafe {
+			let mut battery = mem::uninitialized();
+			XInputGetBatteryInformation(self.index as u32, 0, &mut battery);
+			match battery._type {
+				BatteryType::Wired | BatteryType::Disconnected =>
+					None,
+				_ =>
+					Some(match battery.level {
+						BatteryLevel::Empty => 0.0,
+						BatteryLevel::Low => 0.25,
+						BatteryLevel::Medium => 0.5,
+						BatteryLevel::High => 1.0
+					})
+			}
+		}
 	}
 	fn get_id(&self) -> Cow<str> {
 		"XInput Device".into_cow()

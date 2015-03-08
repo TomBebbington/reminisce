@@ -72,6 +72,9 @@ impl ::Joystick for NativeJoystick {
   fn get_num_axes(&self) -> u8 {
     self.js.get_num_axis().unwrap() as u8
   }
+  fn get_battery(&self) -> Option<f32> {
+      None
+  }
   fn poll_native(&mut self) -> Option<::Event> {
     if self.sdl.is_none() {
       let flags = INIT_GAME_CONTROLLER | INIT_EVENTS;

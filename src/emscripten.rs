@@ -71,6 +71,9 @@ impl ::Joystick for NativeJoystick {
             str::from_utf8_unchecked(bytes).into_cow()
         }
     }
+    fn get_battery(&self) -> Option<f32> {
+        None
+    }
     fn get_index(&self) -> u8 {
         self.last.index as u8
     }

@@ -1,9 +1,9 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
 //! reading from joysticks.
-
-#![feature(core, std_misc, libc, fs, os, rustc_private, path)]
+#![allow(unused_features)]
+#![feature(core, std_misc, libc, fs, fs_walk, os, rustc_private, path)]
 extern crate libc;
-#[cfg(target_os = "windows")]
+//#[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
 
 #[cfg(feature = "sdl")]
@@ -16,16 +16,16 @@ mod emscripten;
 #[cfg(target_os = "emscripten")]
 pub use emscripten as native;
 
-#[cfg(target_os = "linux")]
-mod linux;
+//#[cfg(target_os = "linux")]
+//mod linux;
 
-#[cfg(target_os = "linux")]
-pub use linux as native;
+//#[cfg(target_os = "linux")]
+//pub use linux as native;
 
-#[cfg(target_os = "windows")]
+//#[cfg(target_os = "windows")]
 mod windows;
 
-#[cfg(target_os = "windows")]
+//#[cfg(target_os = "windows")]
 pub use windows as native;
 
 #[cfg(feature = "sdl")]
@@ -149,6 +149,11 @@ pub trait Joystick : Sized {
 
 	/// Get the number of buttons this joystick has
 	fn get_num_buttons(&self) -> u8;
+
+    /// Get the battery level of this joystick
+    ///
+    /// Returns none if the joystick is wired or this operation is not supported
+    fn get_battery(&self) -> Option<f32>;
 
     /// Poll the joystick for events in non-blocking mode
 	fn poll_native(&mut self) -> Option<Self::NativeEvent>;
