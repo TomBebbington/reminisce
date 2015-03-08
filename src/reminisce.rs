@@ -50,17 +50,17 @@ use std::borrow::Cow;
 /// A direction on a joystick
 pub enum Axis {
 	/// The x direction of the left stick
-  LeftX,
+    LeftX,
 	/// The y direction of the left stick
-  LeftY,
+    LeftY,
 	/// The x direction of the right stick
-  RightX,
+    RightX,
 	/// The y direction of the right stick
-  RightY,
+    RightY,
 	/// How far down the left trigger is pressed
-  TriggerLeft,
+    TriggerLeft,
 	/// How far down the right trigger is pressed
-  TriggerRight,
+    TriggerRight,
 }
 
 #[repr(u8)]
@@ -117,9 +117,9 @@ pub trait IntoEvent {
 }
 
 impl IntoEvent for Event {
-  fn into_event(self) -> Event {
-    self
-  }
+    fn into_event(self) -> Event {
+        self
+    }
 }
 
 /// A single joystick
