@@ -6,7 +6,7 @@
         "Just stop doing that, it's bad for health",
         "Seriously you'll have to see your GP if you keep this up"
     ];
-    window.konami = new Konami(function() {
+    new Konami(function() {
         var post = document.body.getElementsByClassName('post')[0];
         post.textContent = messages[count] || messages[0];
         count += 1;

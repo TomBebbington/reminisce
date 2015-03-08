@@ -5,5 +5,5 @@ theme = "pixyll"
 buildDrafts = true
 canonifyurls = true
 [params]
-  description = "A Joystick input library for Rust"
+  description = "A lightweight Gamepad input library in Rust"
   author = "Tom Bebbington"
