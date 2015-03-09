@@ -4,7 +4,7 @@ use std::mem;
 // I tried
 // It's a bit hard to write this without a Windows pc on hand...
 // But this should work on Windows Vista, 7, and 8
-#[link(name = "Xinput9_1_0")]
+#[link(name = "XInput9_1_0")]
 extern "stdcall" {
 	fn XInputGetCapabilities(index: u32, flags: u32, capabilities: *mut Capabilities) -> i32;
 	fn XInputGetState(index: u32, state: *mut State) -> i32;
