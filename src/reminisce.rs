@@ -10,22 +10,22 @@ extern crate libc;
 extern crate sdl2;
 
 /// Someday, somehow
-#[cfg(target_os = "emscripten")]
+#[cfg(all(feature = "emscripten", not(feature = "sdl")))]
 mod emscripten;
 
-#[cfg(target_os = "emscripten")]
+#[cfg(all(feature = "emscripten", not(feature = "sdl")))]
 pub use emscripten as native;
 
-#[cfg(target_os = "linux")]
+#[cfg(all(target_os = "linux", not(feature = "sdl")))]
 mod linux;
 
-#[cfg(target_os = "linux")]
+#[cfg(all(target_os = "linux", not(feature = "sdl")))]
 pub use linux as native;
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", not(feature = "sdl")))]
 mod windows;
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", not(feature = "sdl")))]
 pub use windows as native;
 
 #[cfg(feature = "sdl")]
