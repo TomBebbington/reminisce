@@ -3,7 +3,7 @@
 #![allow(unused_features)]
 #![feature(core, std_misc, libc, fs, fs_walk, os, rustc_private, path)]
 extern crate libc;
-//#[cfg(target_os = "windows")]
+#[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
 
 #[cfg(feature = "sdl")]
@@ -16,16 +16,16 @@ mod emscripten;
 #[cfg(target_os = "emscripten")]
 pub use emscripten as native;
 
-//#[cfg(target_os = "linux")]
-//mod linux;
+#[cfg(target_os = "linux")]
+mod linux;
 
-//#[cfg(target_os = "linux")]
-//pub use linux as native;
+#[cfg(target_os = "linux")]
+pub use linux as native;
 
-//#[cfg(target_os = "windows")]
+#[cfg(target_os = "windows")]
 mod windows;
 
-//#[cfg(target_os = "windows")]
+#[cfg(target_os = "windows")]
 pub use windows as native;
 
 #[cfg(feature = "sdl")]
