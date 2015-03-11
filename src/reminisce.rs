@@ -48,6 +48,26 @@ pub static MIN_AXIS_VALUE:i16 = -32767;
 use std::borrow::Cow;
 use std::mem::transmute as cast;
 
+macro_rules! text_enum(
+    ($name:ident, $($enumer:ident => $text:expr),+) => (
+        impl ::std::fmt::Display for $name {
+            fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                write!(fmt, "{}", match *self {
+                    $($name::$enumer => $text),+
+                })
+            }
+        }
+        impl ::std::str::FromStr for $name {
+            type Err = String;
+            fn from_str(s: &str) -> Result<$name, String> {
+                match s {
+                    $($text => Ok($name::$enumer),)+
+                    _ => Err(format!("Could not make {} from {}", stringify!($name), s))
+                }
+            }
+        }
+    )
+);
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 /// A direction on a joystick
@@ -79,6 +99,14 @@ pub enum Axis {
     /// This is only used as a button on some platforms so don't rely on just this
     TriggerRight
 }
+text_enum!(Axis,
+    LeftX => "leftx",
+    LeftY => "lefty",
+    RightX => "rightx",
+    RightY => "righty",
+    TriggerLeft => "triggerleft",
+    TriggerRight => "triggerright"
+);
 
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -133,6 +161,24 @@ pub enum Button {
 	/// The right button on the directional pad
 	DPadRight
 }
+text_enum!(Button,
+    A => "a",
+    B => "b",
+    X => "x",
+    Y => "y",
+    LeftShoulder => "leftshoulder",
+    RightShoulder => "rightshoulder",
+    LeftTrigger => "lefttrigger",
+    RightTrigger => "righttrigger",
+    Select => "select",
+    Start => "start",
+    LeftStick => "leftstick",
+    RightStick => "rightstick",
+    DPadUp => "dpadup",
+    DPadDown => "dpaddown",
+    DPadLeft => "dpadleft",
+    DPadRight => "dpadright"
+);
 
 #[derive(Copy, Debug, Eq, PartialEq)]
 /// An event from a joystick
