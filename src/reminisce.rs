@@ -38,9 +38,9 @@ pub use native::{NativeJoystick, scan};
 
 
 /// The maximum axis value
-pub static MAX_JOYSTICK_VALUE:i16 = 32767;
+pub static MAX_AXIS_VALUE:i16 = 32767;
 /// The minimum axis value
-pub static MIN_JOYSTICK_VALUE:i16 = -32767;
+pub static MIN_AXIS_VALUE:i16 = -32767;
 
 use std::mem::transmute as cast;
 use std::borrow::Cow;
@@ -48,44 +48,74 @@ use std::borrow::Cow;
 #[repr(u8)]
 #[derive(Copy, Debug, PartialEq, Eq)]
 /// A direction on a joystick
+///
+/// This uses the order that Linux drivers and the HTML5 Gamepad API uses so it should ring a bell
 pub enum Axis {
 	/// The x direction of the left stick
+    ///
+    /// This is usually used for horizontal movement in a game
     LeftX,
 	/// The y direction of the left stick
+    ///
+    /// This is usually used for vertical movement in a game
     LeftY,
 	/// The x direction of the right stick
+    //
+    /// This is usually used for looking around in a game
     RightX,
 	/// The y direction of the right stick
+    //
+    /// This is usually used for looking around in a game
     RightY,
-	/// How far down the left trigger is pressed (not always supported)
+	/// How far down the left trigger is pressed
+    ///
+    /// This is only used as a button on some platforms so don't rely on just this
     TriggerLeft,
-	/// How far down the right trigger is pressed (not always supported)
-    TriggerRight,
+	/// How far down the right trigger is pressed
+    ///
+    /// This is only used as a button on some platforms so don't rely on just this
+    TriggerRight
 }
 
 #[repr(u8)]
 #[derive(Copy, Debug, PartialEq, Eq)]
 /// A button on a joystick
+///
+/// This uses the order that Linux drivers and the HTML5 Gamepad API uses so it should be familiar
 pub enum Button {
-	/// The A button - typically used for jumping
+	/// The A button
+    ///
+    /// This is typically used for jumping
 	A,
-	/// The B button - typically used for shooting
+	/// The B button
+    ///
+    /// This is typically used for hitting
 	B,
 	/// The X button
 	X,
 	/// The Y button
 	Y,
 	/// The left top shoulder button
+    ///
+    /// This is usually used in FPS games for throwing a certain kind of grenade
 	LeftShoulder,
 	/// The right top shoulder button
 	RightShoulder,
 	/// The left bottom shoulder / trigger button
+    ///
+    /// This is typically used in FPS games for aiming down the sights in a weapon
 	LeftTrigger,
 	/// The right bottom shoulder / trigger button
+    ///
+    /// This is typically used in FPS games for shooting with a weapon
 	RightTrigger,
 	/// The back / select button
+    ///
+    /// This is usually used as an alternate pause menu or to open a menu in-game.
 	Select,
 	/// The start / forward button
+    ///
+    /// This is usually used to start and pause a game
 	Start,
 	/// The left stick button
 	LeftStick,
@@ -104,13 +134,13 @@ pub enum Button {
 #[derive(Copy, Debug, Eq, PartialEq)]
 /// An event from a joystick
 pub enum Event {
-	/// Fires when a button is pressed with the button's index
+	/// Fired when a button is pressed with the button's index
 	ButtonPressed(Button),
-	/// Fires when a button is released with the button's index
+	/// Fired when a button is released with the button's index
 	ButtonReleased(Button),
-	/// Fires when a joystick / axis is moved with the axis index and its value,
-	/// which is between MIN_JOYSTICK_VALUE and MAX_JOYSTICK_VALUE
-	JoystickMoved(Axis, i16)
+	/// Fired when a axis is moved with the axis index and its value,
+	/// which is between `MIN_JOYSTICK_VALUE` and `MAX_JOYSTICK_VALUE`
+	AxisMoved(Axis, i16)
 }
 /// Convert a raw event into a Reminisce event
 pub trait IntoEvent {
@@ -119,20 +149,61 @@ pub trait IntoEvent {
 }
 
 impl IntoEvent for Event {
+    /// Convert the event into itself
+    ///
+    /// The only reason this exists is because windows doesn't have events so the backend has to
+    /// make reminisce events directly and pretend that they are the native events.
     fn into_event(self) -> Event {
         self
     }
 }
 
-/// A single joystick
+/// A joystick or gamepad
+///
+/// Each `Joystick` has its own event queue that can be polled repeatedly
+/// using the `iter()` method or by calling the `poll()` method repeatedly.
+///
+/// ``` rust
+/// use reminisce::{scan, Axis, Event, Joystick};
+/// let mut joysticks = scan();
+/// let (mut x, mut y) = (0, 0);
+/// for joystick in &mut joysticks {
+///     for event in joystick.iter() {
+///         match event {
+///             Event::AxisMoved(Axis::LeftX, nx) =>
+///                 x += nx,
+///             Event::AxisMoved(Axis::LeftY, ny) =>
+///                 y += ny,
+///             _ => ()
+///         }
+///     }
+/// }
+/// println!("{}, {}", x, y);
+/// ```
 pub trait Joystick : Sized {
-	/// A joystick that includes the state
+	/// The version of this joystick that includes the state
+    ///
+    /// On Linux, this is a wrapper around the joystick, but on Windows,
+    /// this is the same stucture because the joystick always includes
+    /// state on it.
 	type WithState : StatefulJoystick;
 
     /// The event that this joystick processes
     type NativeEvent: IntoEvent;
 
 	/// Create a new joystick from its index
+    ///
+    /// If an error occurs, this will return the textual representation of that error.
+    ///
+    /// ``` rust
+    /// use reminisce::{NativeJoystick, Joystick};
+    /// let joystick:Result<NativeJoystick, &str> = Joystick::new(0);
+    /// if let Ok(joystick) = joystick {
+    ///     println!("{}", joystick.get_id())
+    /// } else {
+    ///     println!("No joystick plugged in")
+    /// }
+    /// ```
 	fn new(index: u8) -> Result<Self, &'static str>;
 
 	/// Check if the joystick is still connected
@@ -140,59 +211,76 @@ pub trait Joystick : Sized {
 
 	/// Get the identifier of this joystick
     ///
-    /// This is a cow because it can be a String
+    /// This is a cow because it can be a static or owned String depending on the
+    /// implementation.
 	fn get_id(&self) -> Cow<str>;
 
 	/// Get the index of this joystick
 	fn get_index(&self) -> u8;
 
 	/// Get the number of axes this joystick has
+    ///
+    /// This is capped at 6 axes for now.
 	fn get_num_axes(&self) -> u8;
 
 	/// Get the number of buttons this joystick has
+    ///
+    /// This is capped at 16 buttons currently.
 	fn get_num_buttons(&self) -> u8;
 
     /// Get the battery level of this joystick
     ///
     /// Returns none if the joystick is wired or this operation is not supported
+    /// by the backend
     fn get_battery(&self) -> Option<f32>;
 
-    /// Poll the joystick for events in non-blocking mode
+    /// Poll the joystick for events in non-blocking mode and return the native event
+    /// as returned from the backend
 	fn poll_native(&mut self) -> Option<Self::NativeEvent>;
 
     /// Poll the joystick for events in non-blocking mode
+    ///
+    /// This runs `self.poll_native()` then converts it into an event using
+    /// the `into_event` method.
     fn poll(&mut self) -> Option<Event> {
         self.poll_native().map(|e| e.into_event())
     }
 
-    /// Iterate through the joystick's event queue in non-blocking mode
+    /// Iterate through the events that haven't been processed yet
     fn iter(&mut self) -> Poller<Self> {
         Poller {
             joystick: self
         }
     }
 
-	/// Get a version of this joystick which includes state
+	/// Get the version of this joystick which includes state
+    ///
+    /// On the Linux backend, a wrapper is made, but on the Windows
+    /// backend no wrapper is needed so this just returns the
+    ///n `NativeJoystick` structure
 	fn with_state(self) -> Self::WithState;
 }
-impl Iterator for NativeJoystick {
-    type Item = Event;
-    fn next(&mut self) -> Option<Event> {
-        self.poll()
-    }
-}
 
-/// A single joystick with its state saved
+/// A joystick that keeps a record of its state
+/// This makes it really easy to write the input for games, etc because its just a matter
+/// of calling a single method to query where the axes are
+///
+/// ``` rust
+/// use reminisce::{scan, Axis, Joystick, StatefulJoystick};
+/// let mut joysticks = scan().into_iter().map(|js| js.with_state()).collect::<Vec<_>>();
+/// for joystick in &joysticks {
+///     let x = joystick.get_axis(Axis::LeftX).unwrap_or(0);
+///     let y = joystick.get_axis(Axis::LeftY).unwrap_or(0);
+///     println!("{}, {}", x, y)
+/// }
+/// ```
 pub trait StatefulJoystick : Joystick + Sized {
-	/// Get the value of a specific axis from its index
-	///
-	/// Typically the first two of these are the primary analog stick's x and y
-	/// co-ordinates
+	/// Get the value of a specific axis as an integer between `MIN_AXIS_VALUE` and `MAX_AXIS_VALUE`
 	fn get_axis(&self, index: Axis) -> Option<i16>;
 
 	/// Get the value of a specific axis normalised to between -1.0 and 1.0
 	fn get_normalised_axis(&self, index: Axis) -> Option<f32> {
-		self.get_axis(index).map(|v| v as f32 / MAX_JOYSTICK_VALUE as f32)
+		self.get_axis(index).map(|v| v as f32 / MAX_AXIS_VALUE as f32)
 	}
 
 	/// Iterate over the axes in this joystick
@@ -218,7 +306,7 @@ pub trait StatefulJoystick : Joystick + Sized {
 	/// The first two buttons are usually the accept and back buttons
 	fn get_button(&self, index: Button) -> Option<bool>;
 
-	/// Update the state of this joystick
+	/// Update the state of this joystick by polling the native backend
 	fn update(&mut self);
 }
 
@@ -250,6 +338,7 @@ impl<'a, J> Iterator for Buttons<'a, J> where J:StatefulJoystick {
 	}
 }
 
+
 /// An iterator over a joystick's event queue
 pub struct Poller<'a, J> where J:Joystick+'a {
     joystick: &'a mut J
@@ -257,6 +346,7 @@ pub struct Poller<'a, J> where J:Joystick+'a {
 
 impl<'a, J> Iterator for Poller<'a, J> where J:Joystick {
 	type Item = Event;
+    /// This calls the `joystick.poll()` method to poll for the next event
 	fn next(&mut self) -> Option<Event> {
 		self.joystick.poll()
 	}

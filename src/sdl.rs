@@ -25,7 +25,7 @@ impl IntoEvent for Event {
         match event {
             Event::JoyAxisMotion {axis_idx, value, ..} => {
                 let index = unsafe { cast(axis_idx) };
-                ::Event::JoystickMoved(index, value)
+                ::Event::AxisMoved(index, value)
             },
             Event::JoyButtonDown {button_idx, ..} => {
                 let index = unsafe { cast(button_idx) };

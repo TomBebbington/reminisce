@@ -170,7 +170,7 @@ macro_rules! event{
 	);
 	(axis $this:expr, $now:expr, $last:expr, $field:ident, $id:expr) => (
 		if $now.$field != $last.$field {
-			$this.events.push_back(::Event::JoystickMoved($id, $now.$field))
+			$this.events.push_back(::Event::AxisMoved($id, $now.$field))
 		}
 	);
 	(axes $this:expr, $now:expr, $last:expr, $($field:ident => $id:expr),+) => ({

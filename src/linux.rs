@@ -190,7 +190,7 @@ impl ::Joystick for StatefulNativeJoystick {
 	fn poll(&mut self) -> Option<::Event> {
 		let event = self.js.poll();
 		match event {
-			Some(::Event::JoystickMoved(i, v)) => self.axes[i as usize] = v,
+			Some(::Event::AxisMoved(i, v)) => self.axes[i as usize] = v,
 			Some(::Event::ButtonPressed(i)) => self.buttons[i as usize] = true,
 			Some(::Event::ButtonReleased(i)) => self.buttons[i as usize] = false,
 			_ => ()
@@ -230,7 +230,7 @@ impl ::IntoEvent for LinuxEvent {
 		match (self._type, self.value) {
 			(1, 0) => ::Event::ButtonReleased(unsafe { cast(self.number) }),
 			(1, 1) => ::Event::ButtonPressed(unsafe { cast(self.number) }),
-			(2, _) => ::Event::JoystickMoved(unsafe { cast(self.number) }, self.value),
+			(2, _) => ::Event::AxisMoved(unsafe { cast(self.number) }, self.value),
 			_ => panic!("Bad type and value {} {} for joystick", self._type, self.value)
 		}
 	}

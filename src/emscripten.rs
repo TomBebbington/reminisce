@@ -135,7 +135,7 @@ impl ::StatefulJoystick for NativeJoystick {
                     let last_axis = last.axis[axis as usize];
                     if now_axis != last_axis {
                         let axis = cast(axis as u8);
-                		self.events.push_back(::Event::JoystickMoved(axis, (now_axis as f32 * ::MAX_JOYSTICK_VALUE as f32) as i16))
+                		self.events.push_back(::Event::AxisMoved(axis, (now_axis as f32 * ::MAX_JOYSTICK_VALUE as f32) as i16))
                     }
                 }
             }
