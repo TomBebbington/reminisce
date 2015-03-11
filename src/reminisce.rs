@@ -1,7 +1,7 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
 //! reading from joysticks.
 #![allow(unused_features)]
-#![feature(core, std_misc, libc, fs, fs_walk, os, rustc_private, path)]
+#![feature(alloc, core, std_misc, libc, fs, fs_walk, os, rustc_private, path)]
 extern crate libc;
 #[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
@@ -44,9 +44,11 @@ pub static MIN_AXIS_VALUE:i16 = -32767;
 
 use std::mem::transmute as cast;
 use std::borrow::Cow;
+use std::collections::BTreeMap;
+use std::rc::Rc;
 
 #[repr(u8)]
-#[derive(Copy, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 /// A direction on a joystick
 ///
 /// This uses the order that Linux drivers and the HTML5 Gamepad API uses so it should ring a bell
@@ -78,7 +80,7 @@ pub enum Axis {
 }
 
 #[repr(u8)]
-#[derive(Copy, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 /// A button on a joystick
 ///
 /// This uses the order that Linux drivers and the HTML5 Gamepad API uses so it should be familiar
@@ -246,6 +248,15 @@ pub trait Joystick : Sized {
         self.poll_native().map(|e| e.into_event())
     }
 
+    /// Map the axes and buttons of this joystick by wrapping it in a `JoystickMapper`
+    fn into_mapper(self) -> JoystickMapper<Self> {
+        JoystickMapper {
+            joystick: self,
+            axes: Rc::new(BTreeMap::new()),
+            buttons: Rc::new(BTreeMap::new())
+        }
+    }
+
     /// Iterate through the events that haven't been processed yet
     fn iter(&mut self) -> Poller<Self> {
         Poller {
@@ -350,4 +361,108 @@ impl<'a, J> Iterator for Poller<'a, J> where J:Joystick {
 	fn next(&mut self) -> Option<Event> {
 		self.joystick.poll()
 	}
+}
+
+/// A Joystick mapper
+///
+/// This allows you to map a joysticks buttons and axes
+pub struct JoystickMapper<J> where J:Joystick {
+    joystick: J,
+    axes: Rc<BTreeMap<Axis, Axis>>,
+    buttons: Rc<BTreeMap<Button, Button>>
+}
+impl<J> JoystickMapper<J> where J:Joystick {
+    /// Map a button to another button
+    pub fn map_button(&mut self, from: Button, to: Button) {
+        self.buttons.make_unique().insert(from, to);
+    }
+
+    /// Map an axis to another axis
+    pub fn map_axis(&mut self, from: Axis, to: Axis) {
+        self.axes.make_unique().insert(from, to);
+    }
+}
+impl<J> Joystick for JoystickMapper<J> where J:Joystick {
+    type WithState = JoystickMapper<<J as Joystick>::WithState>;
+    type NativeEvent = <J as Joystick>::NativeEvent;
+
+    fn new(index: u8) -> Result<JoystickMapper<J>, &'static str> {
+        Ok(JoystickMapper {
+            joystick: try!(Joystick::new(index)),
+            axes: Rc::new(BTreeMap::new()),
+            buttons: Rc::new(BTreeMap::new())
+        })
+    }
+
+    fn is_connected(&self) -> bool {
+        self.joystick.is_connected()
+    }
+    fn get_id(&self) -> Cow<str> {
+        self.joystick.get_id()
+    }
+    fn get_index(&self) -> u8 {
+        self.joystick.get_index()
+    }
+    fn get_num_axes(&self) -> u8 {
+        self.joystick.get_num_axes()
+    }
+    fn get_num_buttons(&self) -> u8 {
+        self.joystick.get_num_buttons()
+    }
+    fn get_battery(&self) -> Option<f32> {
+        self.joystick.get_battery()
+    }
+    fn poll_native(&mut self) -> Option<<J as Joystick>::NativeEvent> {
+        self.joystick.poll_native()
+    }
+    fn poll(&mut self) -> Option<Event> {
+        self.joystick.poll().map(|event|
+            match event {
+                Event::ButtonPressed(mut btn) => {
+                    if let Some(&button) = self.buttons.get(&btn) {
+                        btn = button
+                    }
+                    Event::ButtonPressed(btn)
+                },
+                Event::ButtonReleased(mut btn) => {
+                    if let Some(&button) = self.buttons.get(&btn) {
+                        btn = button
+                    }
+                    Event::ButtonReleased(btn)
+                },
+                Event::AxisMoved(mut axis, value) => {
+                    if let Some(&new_axis) = self.axes.get(&axis) {
+                        axis = new_axis
+                    }
+                    Event::AxisMoved(axis, value)
+                },
+            })
+    }
+    fn with_state(self) -> JoystickMapper<<J as Joystick>::WithState> {
+        JoystickMapper {
+            joystick: self.joystick.with_state(),
+            axes: self.axes.clone(),
+            buttons: self.buttons.clone()
+        }
+    }
+}
+impl<J> StatefulJoystick for JoystickMapper<J> where J:StatefulJoystick {
+    fn get_axis(&self, mut axis: Axis) -> Option<i16> {
+        use StatefulJoystick;
+        if let Some(&new_axis) = self.axes.get(&axis) {
+            axis = new_axis
+        }
+        self.joystick.get_axis(axis)
+    }
+    fn get_button(&self, mut button: Button) -> Option<bool> {
+        use StatefulJoystick;
+        if let Some(&btn) = self.buttons.get(&button) {
+            button = btn
+        }
+        self.joystick.get_button(button)
+    }
+    fn update(&mut self) {
+        use StatefulJoystick;
+        self.joystick.update()
+    }
 }
