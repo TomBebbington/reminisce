@@ -26,9 +26,7 @@ fn main() {
 			}
 		}
 	}
-	for (from, to) in mappings {
-		joystick.map_button(from, to);
-	}
+	joystick.map_buttons(mappings.into_iter());
 	loop {
 		for event in joystick.iter() {
 			println!("{:?}", event)
