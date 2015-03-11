@@ -1,4 +1,12 @@
 language: rust
+os:
+  - linux
+  - osx
+matrix:
+  allow_failures:
+    - os: osx
+before_script: |
+  echo "Operating System: $TRAVIS_OS_NAME"
 after_success: |
     rm -rf target/doc && \
     cargo doc && \

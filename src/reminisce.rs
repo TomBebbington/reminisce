@@ -57,9 +57,9 @@ pub enum Axis {
     RightX,
 	/// The y direction of the right stick
     RightY,
-	/// How far down the left trigger is pressed
+	/// How far down the left trigger is pressed (not always supported)
     TriggerLeft,
-	/// How far down the right trigger is pressed
+	/// How far down the right trigger is pressed (not always supported)
     TriggerRight,
 }
 
@@ -75,20 +75,22 @@ pub enum Button {
 	X,
 	/// The Y button
 	Y,
+	/// The left top shoulder button
+	LeftShoulder,
+	/// The right top shoulder button
+	RightShoulder,
+	/// The left bottom shoulder / trigger button
+	LeftTrigger,
+	/// The right bottom shoulder / trigger button
+	RightTrigger,
 	/// The back / select button
-	Back,
-	/// The guide button
-	Guide,
-	/// The start button
+	Select,
+	/// The start / forward button
 	Start,
 	/// The left stick button
 	LeftStick,
 	/// The right stick button
 	RightStick,
-	/// The left shoulder button
-	LeftShoulder,
-	/// The right shoulder button
-	RightShoulder,
 	/// The up button on the directional pad
 	DPadUp,
 	/// The down button on the directional pad
