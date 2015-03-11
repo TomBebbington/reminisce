@@ -19,4 +19,5 @@ default = []
 
 [dependencies.sdl2]
 version = "*"
+git = "https://github.com/AngryLawyer/rust-sdl2"
 optional = true

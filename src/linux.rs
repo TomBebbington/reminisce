@@ -115,12 +115,14 @@ impl ::Joystick for NativeJoystick {
 	}
 	fn get_id(&self) -> Cow<str> {
 		unsafe {
-			use std::ffi::CStr;
-
-			let mut bytes = Vec::with_capacity(JSIOCGID_LEN);
-			ioctl(self.fd as u32, JSIOCGID, bytes.as_ptr() as *mut i8);
-			let length = CStr::from_ptr(bytes.as_ptr() as *const i8).to_bytes().len();
-			String::from_raw_parts(bytes.as_mut_ptr(), length, 64).into_cow()
+			let text = String::with_capacity(JSIOCGID_LEN);
+			ioctl(self.fd as u32, JSIOCGID, text.as_ptr() as *mut i8);
+			let mut new_text = String::from_raw_parts(text.as_ptr() as *mut u8, JSIOCGID_LEN, JSIOCGID_LEN);
+			let length = CStr::from_ptr(text.as_ptr() as *const i8).to_bytes().len();
+			mem::forget(text);
+			new_text.truncate(length);
+			new_text.shrink_to_fit();
+			new_text.into_cow()
 		}
 	}
 	fn get_index(&self) -> u8 {

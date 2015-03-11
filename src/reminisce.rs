@@ -267,7 +267,7 @@ pub trait Joystick : Sized {
 ///
 /// ``` rust
 /// use reminisce::{scan, Axis, Joystick, StatefulJoystick};
-/// let mut joysticks = scan().into_iter().map(|js| js.with_state()).collect::<Vec<_>>();
+/// let mut joysticks = scan().into_iter().filter_map(|js| js.map(|js| with_state())).collect::<Vec<_>>();
 /// for joystick in &joysticks {
 ///     let x = joystick.get_axis(Axis::LeftX).unwrap_or(0);
 ///     let y = joystick.get_axis(Axis::LeftY).unwrap_or(0);
