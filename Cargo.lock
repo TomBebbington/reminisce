@@ -2,7 +2,7 @@
 name = "reminisce"
 version = "0.2.1"
 dependencies = [
- "sdl2 0.0.28 (git+https://github.com/AngryLawyer/rust-sdl2)",
+ "sdl2 0.0.28 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -32,18 +32,18 @@ dependencies = [
 [[package]]
 name = "sdl2"
 version = "0.0.28"
-source = "git+https://github.com/AngryLawyer/rust-sdl2#f2e7c4fb354907bfa9476343ac34c6af58870681"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sdl2-sys 0.0.27 (git+https://github.com/AngryLawyer/rust-sdl2)",
+ "sdl2-sys 0.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "sdl2-sys"
 version = "0.0.27"
-source = "git+https://github.com/AngryLawyer/rust-sdl2#f2e7c4fb354907bfa9476343ac34c6af58870681"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
