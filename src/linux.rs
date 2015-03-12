@@ -28,15 +28,17 @@ pub fn scan() -> Vec<NativeJoystick> {
 	use std::fs;
 	// So many ifs...
 	let mut joysticks = Vec::with_capacity(4);
-	for entry in fs::walk_dir("/dev/input/").unwrap() {
-		if let Ok(entry) = entry {
-			let path = entry.path();
-			if let Some(name) = path.file_name() {
-				if let Some(name) = name.to_str() {
-					if name.starts_with("js") {
-						if let Ok(index) = name[2..].parse() {
-							if let Ok(js) = Joystick::new(index) {
-								joysticks.push(js)
+	if let Ok(entries) = fs::walk_dir("/dev/input/") {
+		for entry in entries {
+			if let Ok(entry) = entry {
+				let path = entry.path();
+				if let Some(name) = path.file_name() {
+					if let Some(name) = name.to_str() {
+						if name.starts_with("js") {
+							if let Ok(index) = name[2..].parse() {
+								if let Ok(js) = Joystick::new(index) {
+									joysticks.push(js)
+								}
 							}
 						}
 					}
