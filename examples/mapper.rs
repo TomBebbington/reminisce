@@ -1,6 +1,7 @@
 extern crate reminisce;
-use reminisce::*;
+#[cfg(feature = "mappings")]
 fn main() {
+	use reminisce::*;
 	let mut joysticks = scan();
 	let mut joystick = joysticks.pop().expect("Failed to open joystick").into_mapper();
 	println!("Please press the button you would like to map, then press Start to debug");
@@ -32,4 +33,9 @@ fn main() {
 			println!("{:?}", event)
 		}
 	}
+}
+
+#[cfg(not(feature = "mappings"))]
+fn main() {
+
 }
