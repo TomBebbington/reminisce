@@ -198,8 +198,8 @@ impl ::StatefulJoystick for NativeJoystick {
 			::Button::Y => Some(Y),
 			::Button::LeftShoulder => Some(LEFT_SHOULDER),
 			::Button::RightShoulder => Some(RIGHT_SHOULDER),
-			::Button::Back => Some(BACK),
-			::Button::Guide => Some(START),
+			::Button::Select => Some(BACK),
+			::Button::Start => Some(START),
 			::Button::LeftStick => Some(LEFT_THUMB),
 			::Button::RightStick => Some(RIGHT_THUMB),
 			_ => None
@@ -228,8 +228,8 @@ impl ::StatefulJoystick for NativeJoystick {
 				Y => ::Button::Y,
 				LEFT_SHOULDER => ::Button::LeftShoulder,
 				RIGHT_SHOULDER => ::Button::RightShoulder,
-				BACK => ::Button::Back,
-				START => ::Button::Guide,
+				BACK => ::Button::Select,
+				START => ::Button::Start,
 				LEFT_THUMB => ::Button::LeftStick,
 				RIGHT_THUMB => ::Button::RightStick
 			}

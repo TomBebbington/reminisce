@@ -1,7 +1,7 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
 //! reading from joysticks.
-#![allow(unused_features)]
-#![feature(alloc, core, std_misc, libc, fs, fs_walk, os, rustc_private, path)]
+#![feature(alloc)]
+#![cfg_attr(target_os = "linux", feature(core, libc, fs_walk, os, path))]
 extern crate libc;
 #[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
