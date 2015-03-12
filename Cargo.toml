@@ -14,6 +14,7 @@ name = "reminisce"
 
 [features]
 sdl = [ "sdl2" ]
+mappings = []
 default = []
 
 

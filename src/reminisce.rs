@@ -1,6 +1,6 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
 //! reading from joysticks.
-#![feature(alloc)]
+#![cfg_attr(feature = "mappings", feature(alloc))]
 #![cfg_attr(target_os = "linux", feature(core, libc, fs_walk, os, path))]
 extern crate libc;
 #[cfg(target_os = "windows")]
@@ -34,8 +34,10 @@ mod sdl;
 #[cfg(feature = "sdl")]
 pub use sdl as native;
 
+#[cfg(feature = "mappings")]
 mod mapper;
 
+#[cfg(feature = "mappings")]
 pub use mapper::JoystickMapper;
 pub use native::{NativeJoystick, scan};
 
@@ -48,6 +50,7 @@ pub static MIN_AXIS_VALUE:i16 = -32767;
 use std::borrow::Cow;
 use std::mem::transmute as cast;
 
+#[cfg(feature = "mappings")]
 macro_rules! text_enum(
     ($name:ident, $($enumer:ident => $text:expr),+) => (
         impl ::std::fmt::Display for $name {
@@ -99,6 +102,7 @@ pub enum Axis {
     /// This is only used as a button on some platforms so don't rely on just this
     TriggerRight
 }
+#[cfg(feature = "mappings")]
 text_enum!(Axis,
     LeftX => "leftx",
     LeftY => "lefty",
@@ -161,6 +165,7 @@ pub enum Button {
 	/// The right button on the directional pad
 	DPadRight
 }
+#[cfg(feature = "mappings")]
 text_enum!(Button,
     A => "a",
     B => "b",
@@ -296,6 +301,7 @@ pub trait Joystick : Sized {
     }
 
     /// Map the axes and buttons of this joystick by wrapping it in a `JoystickMapper`
+    #[cfg(feature = "mappings")]
     fn into_mapper(self) -> JoystickMapper<Self> {
         JoystickMapper::new(self)
     }

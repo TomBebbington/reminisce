@@ -1,5 +1,5 @@
-#![feature(path, path_ext)]
-#[cfg(windows)]
+#![cfg_attr(target_os = "windows", feature(path, path_ext))]
+#[cfg(target_os = "windows")]
 fn main() {
 	use std::env;
 	use std::fs::{self, PathExt};
@@ -12,7 +12,7 @@ fn main() {
 	};
 	let out_dir = PathBuf::new(&env::var("OUT_DIR").unwrap());
 	let mut out = out_dir.clone();
-	out.push(&lib.file_name().unwrap()); 
+	out.push(&lib.file_name().unwrap());
 	fs::copy(lib, &out).ok().expect("Failed to copy XInput");
 	println!("cargo:rustc-flags=-L native={:?}", out_dir);
 }
