@@ -1,6 +1,6 @@
 [root]
 name = "reminisce"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "sdl2 0.0.28 (git+https://github.com/AngryLawyer/rust-sdl2)",
 ]
