@@ -1,7 +1,7 @@
 use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, read, strerror};
 use std::borrow::{Cow, IntoCow};
 use std::ffi::{CStr, CString};
-use std::{mem, os, str};
+use std::{mem, str};
 use Joystick;
 
 static JSIOCGAXES: c_uint = 2147576337;
@@ -10,6 +10,7 @@ static JSIOCGID: c_uint = 2151705107;
 static JSIOCGID_LEN: usize = 64;
 
 extern {
+	static errno:c_int;
 	fn open(path: *const c_char, oflag: c_int) -> c_int;
 	fn close(fd: c_int) -> c_int;
 	fn ioctl(fd: c_uint, op: c_uint, result: *mut c_char);
@@ -17,8 +18,7 @@ extern {
 
 fn os_error() -> &'static str {
 	unsafe {
-		let num = os::errno() as c_int;
-		let c_error = CStr::from_ptr(strerror(num) as *const i8);
+		let c_error = CStr::from_ptr(strerror(errno) as *const i8);
 		str::from_utf8(c_error.to_bytes()).unwrap()
 	}
 }
@@ -85,7 +85,7 @@ impl ::Joystick for NativeJoystick {
 			loop {
 				let event_size = mem::size_of::<LinuxEvent>() as c_ulong;
 				if read(self.fd, mem::transmute(&mut event), event_size) == -1 {
-					match os::errno() {
+					match errno {
 						19 => self.connected = false,
 						11 => (),
 						code =>

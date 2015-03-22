@@ -1,7 +1,7 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
 //! reading from joysticks.
 #![cfg_attr(feature = "mappings", feature(alloc))]
-#![cfg_attr(target_os = "linux", feature(core, libc, fs_walk, os, path))]
+#![cfg_attr(target_os = "linux", feature(core, libc, fs_walk))]
 extern crate libc;
 #[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
@@ -11,31 +11,31 @@ extern crate sdl2;
 
 /// Someday, somehow
 #[cfg(all(feature = "emscripten", not(feature = "sdl")))]
-mod emscripten;
+pub mod emscripten;
 
 #[cfg(all(feature = "emscripten", not(feature = "sdl")))]
 pub use emscripten as native;
 
 #[cfg(all(target_os = "linux", not(feature = "sdl")))]
-mod linux;
+pub mod linux;
 
 #[cfg(all(target_os = "linux", not(feature = "sdl")))]
 pub use linux as native;
 
 #[cfg(all(target_os = "windows", not(feature = "sdl")))]
-mod windows;
+pub mod windows;
 
 #[cfg(all(target_os = "windows", not(feature = "sdl")))]
 pub use windows as native;
 
 #[cfg(feature = "sdl")]
-mod sdl;
+pub mod sdl;
 
 #[cfg(feature = "sdl")]
 pub use sdl as native;
 
 #[cfg(feature = "mappings")]
-mod mapper;
+pub mod mapper;
 
 #[cfg(feature = "mappings")]
 pub use mapper::JoystickMapper;
