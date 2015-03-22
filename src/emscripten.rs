@@ -94,7 +94,7 @@ impl ::Joystick for NativeJoystick {
 }
 impl ::StatefulJoystick for NativeJoystick {
     fn get_axis(&self, index: ::Axis) -> Option<i16> {
-        self.get_normalised_axis(index).map(|axis| (axis * ::MAX_JOYSTICK_VALUE as f32) as i16)
+        self.get_normalised_axis(index).map(|axis| (axis * ::MAX_AXIS_VALUE as f32) as i16)
     }
     fn get_normalised_axis(&self, index: ::Axis) -> Option<f32> {
         let index = unsafe { cast(index) };
@@ -135,7 +135,7 @@ impl ::StatefulJoystick for NativeJoystick {
                     let last_axis = last.axis[axis as usize];
                     if now_axis != last_axis {
                         let axis = cast(axis as u8);
-                		self.events.push_back(::Event::AxisMoved(axis, (now_axis as f32 * ::MAX_JOYSTICK_VALUE as f32) as i16))
+                		self.events.push_back(::Event::AxisMoved(axis, (now_axis as f32 * ::MAX_AXIS_VALUE as f32) as i16))
                     }
                 }
             }
