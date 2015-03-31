@@ -52,7 +52,6 @@ use std::borrow::Cow;
 use std::error::Error;
 use std::fmt::Debug;
 use std::mem::transmute as cast;
-use std::ops::Index;
 
 #[cfg(feature = "mappings")]
 macro_rules! text_enum(
@@ -257,7 +256,7 @@ pub trait Joystick : Sized {
     ///
     /// ``` rust
     /// use reminisce::{NativeJoystick, Joystick};
-    /// let joystick:Result<NativeJoystick, &str> = Joystick::new(0);
+    /// let joystick:Joystick = Joystick::new(0).unwrap();
     /// if let Ok(joystick) = joystick {
     ///     println!("{}", joystick.get_id())
     /// } else {
