@@ -3,6 +3,8 @@ use sdl2::event::Event;
 use sdl2::{init, Sdl, INIT_GAME_CONTROLLER, INIT_EVENTS};
 
 use std::borrow::{Cow, IntoCow};
+use std::error::Error;
+use std::fmt;
 use std::rc::Rc;
 
 /// A native joystick using SDL
@@ -48,9 +50,27 @@ pub fn scan() -> Vec<NativeJoystick> {
     (0..num).filter_map(|i| ::Joystick::new(i).ok().map(|js:NativeJoystick| js.in_context(sdl.clone()))).collect()
 }
 
+pub struct OpenError {
+    err: String
+}
+impl Error for OpenError {
+    fn description(&self) -> &str {
+        &self.err
+    }
+    fn cause(&self) -> Option<&Error> {
+        None
+    }
+}
+impl fmt::Debug for OpenError {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "{}", self.err)
+    }
+}
+
 impl ::Joystick for NativeJoystick {
     type WithState = NativeJoystick;
     type NativeEvent = Event;
+    type OpenError = OpenError;
     fn new(index: u8) -> Result<NativeJoystick, &'static str> {
         match Joystick::open(index as i32) {
             Ok(js) => Ok(NativeJoystick {js: js, sdl: None}),

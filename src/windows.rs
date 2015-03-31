@@ -1,5 +1,6 @@
 use std::borrow::{Cow, IntoCow};
 use std::collections::VecDeque;
+use std::error::Error;
 use std::mem;
 // I tried
 // It's a bit hard to write this without a Windows pc on hand...
@@ -99,19 +100,20 @@ pub struct NativeJoystick {
 impl ::Joystick for NativeJoystick {
 	type WithState = NativeJoystick;
 	type NativeEvent = ::Event;
+	type Error = Error;
 	fn new(index: u8) -> Result<NativeJoystick, &'static str> {
 		unsafe {
 			let mut caps: Capabilities = mem::uninitialized();
-			match XInputGetCapabilities(index as u32, 0, &mut caps) {
-				0 =>
-					Ok(NativeJoystick {
-						index: index,
-						last: caps.gamepad,
-						last_packet: 0,
-						events: VecDeque::with_capacity(10)
-					}),
-				0x48F => Err("Device not connected"),
-				_ => Err("Unknown Error")
+			let code = XInputGetCapabilities(index as u32, 0, &mut caps);
+			if code == 0 {
+				Ok(NativeJoystick {
+					index: index,
+					last: caps.gamepad,
+					last_packet: 0,
+					events: VecDeque::with_capacity(10)
+				})
+			} else {
+				Err(Error::from_os_error(code))
 			}
 		}
 	}

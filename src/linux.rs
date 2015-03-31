@@ -1,7 +1,8 @@
-use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, read, strerror};
+use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, read};
 use std::borrow::{Cow, IntoCow};
 use std::ffi::{CStr, CString};
-use std::{mem, str};
+use std::io::Error;
+use std::mem;
 use Joystick;
 
 static JSIOCGAXES: c_uint = 2147576337;
@@ -10,17 +11,9 @@ static JSIOCGID: c_uint = 2151705107;
 static JSIOCGID_LEN: usize = 64;
 
 extern {
-	static errno:c_int;
 	fn open(path: *const c_char, oflag: c_int) -> c_int;
 	fn close(fd: c_int) -> c_int;
 	fn ioctl(fd: c_uint, op: c_uint, result: *mut c_char);
-}
-
-fn os_error() -> &'static str {
-	unsafe {
-		let c_error = CStr::from_ptr(strerror(errno) as *const i8);
-		str::from_utf8(c_error.to_bytes()).unwrap()
-	}
 }
 
 /// Scan for joysticks
@@ -59,15 +52,16 @@ pub struct NativeJoystick {
 impl ::Joystick for NativeJoystick {
 	type WithState = StatefulNativeJoystick;
 	type NativeEvent = LinuxEvent;
+	type OpenError = Error;
 	/// This tries to open the interface `/dev/input/js...` and will return the
 	/// OS-level error if it fails to open this
-	fn new(index: u8) -> Result<NativeJoystick, &'static str> {
+	fn new(index: u8) -> Result<NativeJoystick, Error> {
 		let path = format!("/dev/input/js{}", index);
 		unsafe {
 			let c_path = CString::new(path.as_bytes()).unwrap();
 			let fd =  open(c_path.as_ptr(), O_RDONLY | 0x800);
 			if fd == -1 {
-				Err(os_error())
+				Err(Error::last_os_error())
 			} else {
 				Ok(NativeJoystick {
 					index: index,
@@ -85,11 +79,11 @@ impl ::Joystick for NativeJoystick {
 			loop {
 				let event_size = mem::size_of::<LinuxEvent>() as c_ulong;
 				if read(self.fd, mem::transmute(&mut event), event_size) == -1 {
-					match errno {
+					let err = Error::last_os_error();
+					match Error::last_os_error().raw_os_error().expect("Bad OS Error") {
 						19 => self.connected = false,
 						11 => (),
-						code =>
-							panic!("Error while polling joystick {} - {} - {}", self.index, code, os_error())
+						_ => panic!("{}", err)
 					}
 					return None
 				} else if event._type & 0x80 == 0 {
@@ -144,7 +138,8 @@ impl Drop for NativeJoystick {
 	fn drop(&mut self) {
 		unsafe {
 			if close(self.fd) == -1 {
-				panic!("Failed to close joystick {} due to {}", self.index, os_error())
+				let error = Error::last_os_error();
+				panic!("Failed to close joystick {} due to {}", self.index, error)
 			}
 		}
 	}
@@ -169,9 +164,10 @@ impl StatefulNativeJoystick {
 impl ::Joystick for StatefulNativeJoystick {
 	type WithState = StatefulNativeJoystick;
 	type NativeEvent = LinuxEvent;
-	fn new(index: u8) -> Result<StatefulNativeJoystick, &'static str> {
-		let js = try!(::Joystick::new(index));
-		Ok(StatefulNativeJoystick::wrap(js))
+	type OpenError = Error;
+
+	fn new(index: u8) -> Result<StatefulNativeJoystick, Error> {
+		::Joystick::new(index).map(|js| StatefulNativeJoystick::wrap(js))
 	}
 	fn is_connected(&self) -> bool {
 		self.js.is_connected()

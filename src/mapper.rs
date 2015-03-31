@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 /// A Joystick mapper
 ///
-/// This allows you to map a joysticks buttons and axes
+/// This allows you to map a joystick's buttons and axes
 pub struct JoystickMapper<J> where J:Joystick {
     joystick: J,
     axes: Rc<BTreeMap<Axis, Axis>>,
@@ -56,8 +56,9 @@ impl<J> JoystickMapper<J> where J:Joystick {
 impl<J> Joystick for JoystickMapper<J> where J:Joystick {
     type WithState = JoystickMapper<<J as Joystick>::WithState>;
     type NativeEvent = <J as Joystick>::NativeEvent;
+    type OpenError = <J as Joystick>::OpenError;
 
-    fn new(index: u8) -> Result<JoystickMapper<J>, &'static str> {
+    fn new(index: u8) -> Result<JoystickMapper<J>, <J as Joystick>::OpenError> {
         Ok(JoystickMapper {
             joystick: try!(Joystick::new(index)),
             axes: Rc::new(BTreeMap::new()),

@@ -1,6 +1,6 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
 //! reading from joysticks.
-#![feature(into_cow)]
+#![feature(into_cow, io)]
 #![cfg_attr(feature = "mappings", feature(alloc))]
 #![cfg_attr(target_os = "linux", feature(libc, fs_walk))]
 extern crate libc;
@@ -49,7 +49,10 @@ pub static MAX_AXIS_VALUE:i16 = 32767;
 pub static MIN_AXIS_VALUE:i16 = -32767;
 
 use std::borrow::Cow;
+use std::error::Error;
+use std::fmt::Debug;
 use std::mem::transmute as cast;
+use std::ops::Index;
 
 #[cfg(feature = "mappings")]
 macro_rules! text_enum(
@@ -246,6 +249,8 @@ pub trait Joystick : Sized {
     /// The event that this joystick processes
     type NativeEvent: IntoEvent;
 
+    type OpenError: Error + Debug;
+
 	/// Create a new joystick from its index
     ///
     /// If an error occurs, this will return the textual representation of that error.
@@ -259,7 +264,7 @@ pub trait Joystick : Sized {
     ///     println!("No joystick plugged in")
     /// }
     /// ```
-	fn new(index: u8) -> Result<Self, &'static str>;
+	fn new(index: u8) -> Result<Self, Self::OpenError>;
 
 	/// Check if the joystick is still connected
 	fn is_connected(&self) -> bool;

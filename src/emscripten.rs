@@ -2,6 +2,7 @@ use libc::*;
 use std::borrow::{Cow, IntoCow};
 use std::mem;
 use std::mem::transmute as cast;
+use std::io::Error;
 use std::ffi::CStr;
 use std::collections::VecDeque;
 use Joystick;
@@ -47,12 +48,13 @@ fn os_error(code: c_int) -> &'static str {
 impl ::Joystick for NativeJoystick {
     type WithState = NativeJoystick;
     type NativeEvent = ::Event;
-    fn new(index: u8) -> Result<NativeJoystick, &'static str> {
+    type OpenError = Error;
+    fn new(index: u8) -> Result<NativeJoystick, Error> {
         unsafe {
             let mut state = mem::uninitialized();
             let code = emscripten_get_gamepad_status(index as c_int, &mut state);
             if code != 0 {
-                Err(os_error(code))
+                Err(Error::last_os_error())
             } else {
                 Ok(NativeJoystick {
                     last: state,
