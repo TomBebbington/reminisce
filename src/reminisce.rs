@@ -257,8 +257,7 @@ pub trait Joystick : Sized {
     ///
     /// ``` rust
     /// use reminisce::{NativeJoystick, Joystick};
-    /// let joystick:NativeJoystick = Joystick::open(0);
-    /// if let Ok(joystick) = joystick {
+    /// if let Ok(joystick) = <NativeJoystick as Joystick>::open(0) {
     ///     println!("{}", joystick.get_id())
     /// } else {
     ///     println!("No joystick plugged in")
