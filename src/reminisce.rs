@@ -1,6 +1,6 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
 //! reading from joysticks.
-#![feature(into_cow, io)]
+#![feature(into_cow)]
 #![cfg_attr(feature = "mappings", feature(alloc))]
 #![cfg_attr(target_os = "linux", feature(libc, fs_walk))]
 extern crate libc;
@@ -188,7 +188,7 @@ text_enum!(Button,
     DPadRight => "dpadright"
 );
 
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// An event from a joystick
 pub enum Event {
 	/// Fired when a button is pressed with the button's index
