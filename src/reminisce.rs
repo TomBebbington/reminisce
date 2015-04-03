@@ -127,7 +127,7 @@ pub enum Button {
 	A,
 	/// The B button
     ///
-    /// This is typically used for hitting
+    /// This is typically used for attacking
 	B,
 	/// The X button
 	X,
@@ -189,7 +189,7 @@ text_enum!(Button,
 );
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-/// An event from a joystick
+/// An event emitted by a joystick
 pub enum Event {
 	/// Fired when a button is pressed with the button's index
 	ButtonPressed(Button),
@@ -248,6 +248,7 @@ pub trait Joystick : Sized {
     /// The event that this joystick processes
     type NativeEvent: IntoEvent;
 
+    /// The error that could be thrown while trying to open the joystick
     type OpenError: Error + Debug;
 
 	/// Create a new joystick from its index
@@ -270,7 +271,7 @@ pub trait Joystick : Sized {
 
 	/// Get the identifier of this joystick
     ///
-    /// This is a cow because it can be a static or owned String depending on the
+    /// This is copy-on-write because it can be a borrowed or owned String depending on the
     /// implementation.
 	fn get_id(&self) -> Cow<str>;
 
@@ -320,15 +321,15 @@ pub trait Joystick : Sized {
 
 	/// Get the version of this joystick which includes state
     ///
-    /// On the Linux backend, a wrapper is made, but on the Windows
-    /// backend no wrapper is needed so this just returns the
-    ///n `NativeJoystick` structure
+    /// On the Linux backend, a wrapper is created that records the changes in state, but on the
+    /// Windows backend no wrapper is needed so this just returns the `NativeJoystick` structure
 	fn with_state(self) -> Self::WithState;
 }
 
-/// A joystick that keeps a record of its state
+/// A joystick that tracks its state
+///
 /// This makes it really easy to write the input for games, etc because its just a matter
-/// of calling a single method to query where the axes are
+/// of calling a single method to query the current value of the axes
 ///
 /// ``` rust
 /// use reminisce::{scan, Axis, NativeJoystick, Joystick, StatefulJoystick};
@@ -341,9 +342,15 @@ pub trait Joystick : Sized {
 /// ```
 pub trait StatefulJoystick : Joystick + Sized {
 	/// Get the value of a specific axis as an integer between `MIN_AXIS_VALUE` and `MAX_AXIS_VALUE`
+    ///
+    /// If the axis is horizontal, a negative value indicates it is pointing leftwards and a positive
+    /// value indicates it is pointing rightwards. However, is the axis is vertical a negative value
+    /// indicates it is pointing upwards and a positive value indicates it is pointing downwards
 	fn get_axis(&self, index: Axis) -> Option<i16>;
 
 	/// Get the value of a specific axis normalised to between -1.0 and 1.0
+    ///
+    /// This is equivalent to calling `get_axis` then dividing the value by the `MAX_AXIS_VALUE`
 	fn get_normalised_axis(&self, index: Axis) -> Option<f32> {
 		self.get_axis(index).map(|v| v as f32 / MAX_AXIS_VALUE as f32)
 	}
@@ -366,9 +373,7 @@ pub trait StatefulJoystick : Joystick + Sized {
 		}
 	}
 
-	/// Get the value (if it is pressed or not) of a specific button
-	///
-	/// The first two buttons are usually the accept and back buttons
+	/// Get the pressed state of a specific button
 	fn get_button(&self, index: Button) -> Option<bool>;
 
 	/// Update the state of this joystick by polling the native backend
@@ -381,6 +386,7 @@ pub struct Axes<'a, J> where J:StatefulJoystick+'a {
 	axis: u8
 }
 impl<'a, J> Iterator for Axes<'a, J> where J:StatefulJoystick {
+    /// The axis index and state, respectively
 	type Item = (Axis, i16);
 	fn next(&mut self) -> Option<(Axis, i16)> {
 		self.axis += 1;
@@ -395,6 +401,7 @@ pub struct Buttons<'a, J> where J:StatefulJoystick+'a {
 	button: u8
 }
 impl<'a, J> Iterator for Buttons<'a, J> where J:StatefulJoystick {
+    /// The button index and state, respectively
 	type Item = (Button, bool);
 	fn next(&mut self) -> Option<(Button, bool)> {
 		self.button += 1;
