@@ -58,9 +58,9 @@ impl<J> Joystick for JoystickMapper<J> where J:Joystick {
     type NativeEvent = <J as Joystick>::NativeEvent;
     type OpenError = <J as Joystick>::OpenError;
 
-    fn new(index: u8) -> Result<JoystickMapper<J>, <J as Joystick>::OpenError> {
+    fn open(index: u8) -> Result<JoystickMapper<J>, <J as Joystick>::OpenError> {
         Ok(JoystickMapper {
-            joystick: try!(Joystick::new(index)),
+            joystick: try!(Joystick::open(index)),
             axes: Rc::new(BTreeMap::new()),
             buttons: Rc::new(BTreeMap::new())
         })

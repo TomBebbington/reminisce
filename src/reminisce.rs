@@ -251,20 +251,20 @@ pub trait Joystick : Sized {
     /// The error that could be thrown while trying to open the joystick
     type OpenError: Error + Debug;
 
-	/// Create a new joystick from its index
+	/// Attempts to open a joystick from its index
     ///
     /// If an error occurs, this will return the textual representation of that error.
     ///
     /// ``` rust
     /// use reminisce::{NativeJoystick, Joystick};
-    /// let joystick:NativeJoystick = Joystick::new(0).unwrap();
+    /// let joystick:NativeJoystick = Joystick::open(0).unwrap();
     /// if let Ok(joystick) = joystick {
     ///     println!("{}", joystick.get_id())
     /// } else {
     ///     println!("No joystick plugged in")
     /// }
     /// ```
-	fn new(index: u8) -> Result<Self, Self::OpenError>;
+	fn open(index: u8) -> Result<Self, Self::OpenError>;
 
 	/// Check if the joystick is still connected
 	fn is_connected(&self) -> bool;

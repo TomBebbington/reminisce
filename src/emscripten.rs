@@ -49,7 +49,7 @@ impl ::Joystick for NativeJoystick {
     type WithState = NativeJoystick;
     type NativeEvent = ::Event;
     type OpenError = Error;
-    fn new(index: u8) -> Result<NativeJoystick, Error> {
+    fn open(index: u8) -> Result<NativeJoystick, Error> {
         unsafe {
             let mut state = mem::uninitialized();
             let code = emscripten_get_gamepad_status(index as c_int, &mut state);
@@ -151,7 +151,7 @@ pub fn scan() -> Vec<NativeJoystick> {
     let count = unsafe { emscripten_get_num_gamepads() };
     let mut joysticks = Vec::with_capacity(count as usize);
     for i in (0..count) {
-        joysticks.push(Joystick::new(i as u8).unwrap())
+        joysticks.push(Joystick::open(i as u8).unwrap())
     }
     joysticks
 }

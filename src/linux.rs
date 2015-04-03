@@ -29,7 +29,7 @@ pub fn scan() -> Vec<NativeJoystick> {
 					if let Some(name) = name.to_str() {
 						if name.starts_with("js") {
 							if let Ok(index) = name[2..].parse() {
-								if let Ok(js) = Joystick::new(index) {
+								if let Ok(js) = Joystick::open(index) {
 									joysticks.push(js)
 								}
 							}
@@ -55,7 +55,7 @@ impl ::Joystick for NativeJoystick {
 	type OpenError = Error;
 	/// This tries to open the interface `/dev/input/js...` and will return the
 	/// OS-level error if it fails to open this
-	fn new(index: u8) -> Result<NativeJoystick, Error> {
+	fn open(index: u8) -> Result<NativeJoystick, Error> {
 		let path = format!("/dev/input/js{}", index);
 		unsafe {
 			let c_path = CString::new(path.as_bytes()).unwrap();
@@ -166,8 +166,8 @@ impl ::Joystick for StatefulNativeJoystick {
 	type NativeEvent = LinuxEvent;
 	type OpenError = Error;
 
-	fn new(index: u8) -> Result<StatefulNativeJoystick, Error> {
-		::Joystick::new(index).map(|js| StatefulNativeJoystick::wrap(js))
+	fn open(index: u8) -> Result<StatefulNativeJoystick, Error> {
+		::Joystick::open(index).map(|js| StatefulNativeJoystick::wrap(js))
 	}
 	fn is_connected(&self) -> bool {
 		self.js.is_connected()

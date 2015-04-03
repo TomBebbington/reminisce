@@ -88,7 +88,7 @@ struct Vibration {
 
 /// Scan for joysticks
 pub fn scan() -> Vec<NativeJoystick> {
-	(0..4).filter_map(|i| ::Joystick::new(i).ok()).collect()
+	(0..4).filter_map(|i| ::Joystick::open(i).ok()).collect()
 }
 
 pub struct NativeJoystick {
@@ -101,7 +101,7 @@ impl ::Joystick for NativeJoystick {
 	type WithState = NativeJoystick;
 	type NativeEvent = ::Event;
 	type Error = Error;
-	fn new(index: u8) -> Result<NativeJoystick, &'static str> {
+	fn open(index: u8) -> Result<NativeJoystick, &'static str> {
 		unsafe {
 			let mut caps: Capabilities = mem::uninitialized();
 			let code = XInputGetCapabilities(index as u32, 0, &mut caps);

@@ -47,7 +47,7 @@ pub fn scan() -> Vec<NativeJoystick> {
     let flags = INIT_GAME_CONTROLLER | INIT_EVENTS;
     let sdl = Rc::new(init(flags).unwrap());
     let num = num_joysticks().unwrap() as u8;
-    (0..num).filter_map(|i| ::Joystick::new(i).ok().map(|js:NativeJoystick| js.in_context(sdl.clone()))).collect()
+    (0..num).filter_map(|i| ::Joystick::open(i).ok().map(|js:NativeJoystick| js.in_context(sdl.clone()))).collect()
 }
 
 pub struct OpenError {
@@ -71,7 +71,7 @@ impl ::Joystick for NativeJoystick {
     type WithState = NativeJoystick;
     type NativeEvent = Event;
     type OpenError = OpenError;
-    fn new(index: u8) -> Result<NativeJoystick, &'static str> {
+    fn open(index: u8) -> Result<NativeJoystick, &'static str> {
         match Joystick::open(index as i32) {
             Ok(js) => Ok(NativeJoystick {js: js, sdl: None}),
             Err(_) => Err("Could not open joystick")
