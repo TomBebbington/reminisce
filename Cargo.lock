@@ -1,6 +1,6 @@
 [root]
 name = "reminisce"
-version = "0.2.2"
+version = "0.9.0"
 dependencies = [
  "sdl2 0.0.33 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
