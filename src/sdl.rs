@@ -2,7 +2,7 @@ use sdl2::joystick::*;
 use sdl2::event::Event;
 use sdl2::{init, Sdl, INIT_GAME_CONTROLLER, INIT_EVENTS};
 
-use std::borrow::{Cow, IntoCow};
+use std::borrow::Cow;
 use std::error::Error;
 use std::fmt;
 use std::rc::Rc;
@@ -84,7 +84,7 @@ impl ::Joystick for NativeJoystick {
         self.js.get_instance_id().unwrap() as u8
     }
     fn get_id(&self) -> Cow<str> {
-        self.js.name().into_cow()
+        self.js.name().into()
     }
     fn get_num_buttons(&self) -> u8 {
         self.js.get_num_buttons().unwrap() as u8

@@ -1,5 +1,5 @@
 use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, read};
-use std::borrow::{Cow, IntoCow};
+use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 use std::io::Error;
 use std::mem;
@@ -118,7 +118,7 @@ impl ::Joystick for NativeJoystick {
 			mem::forget(text);
 			new_text.truncate(length);
 			new_text.shrink_to_fit();
-			new_text.into_cow()
+			new_text.into()
 		}
 	}
 	fn get_index(&self) -> u8 {

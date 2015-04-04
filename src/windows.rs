@@ -1,4 +1,4 @@
-use std::borrow::{Cow, IntoCow};
+use std::borrow::Cow;
 use std::collections::VecDeque;
 use std::error::Error;
 use std::mem;
@@ -143,7 +143,7 @@ impl ::Joystick for NativeJoystick {
 		}
 	}
 	fn get_id(&self) -> Cow<str> {
-		"XInput Device".into_cow()
+		"XInput Device".into()
 	}
 	fn get_index(&self) -> u8 {
 		self.index

@@ -1,5 +1,5 @@
 use libc::*;
-use std::borrow::{Cow, IntoCow};
+use std::borrow::Cow;
 use std::mem;
 use std::mem::transmute as cast;
 use std::io::Error;
@@ -70,7 +70,7 @@ impl ::Joystick for NativeJoystick {
         unsafe {
             use std::str;
             let bytes = CStr::from_ptr(self.last.id.as_ptr()).to_bytes();
-            str::from_utf8_unchecked(bytes).into_cow()
+            str::from_utf8_unchecked(bytes).into()
         }
     }
     fn get_battery(&self) -> Option<f32> {
