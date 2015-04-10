@@ -1,13 +1,17 @@
 language: rust
 os:
-  - linux
-  - osx
-matrix:
-  allow_failures:
-    - os: osx
-before_script: |
-  echo "Operating System: $TRAVIS_OS_NAME"
+    - linux
+    - osx
+script:
+    - cargo build
+    - cargo build --features sdl
+    - cargo build --features mappings
+    - cargo build --features sdl,mappings
+    - cargo test
+    - cargo test --features sdl
+    - cargo test --features mappings
+    - cargo test --features sdl,mappings
 after_success: |
-    rm -rf target/doc && \
-    cargo doc && \
-    curl -X POST -H "Github:TomBebbington/reminisce" http://www.rustdox.com
+    - rm -rf target/doc
+    - cargo doc
+    - curl -X POST -H "Github:TomBebbington/reminisce" http://www.rustdox.com
