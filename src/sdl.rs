@@ -21,10 +21,10 @@ impl NativeJoystick {
     }
 }
 
-impl IntoEvent for Event {
+impl ::IntoEvent for Event {
     fn into_event(self) -> ::Event {
         use std::mem::transmute as cast;
-        match event {
+        match self {
             Event::JoyAxisMotion {axis_idx, value, ..} => {
                 let index = unsafe { cast(axis_idx) };
                 ::Event::AxisMoved(index, value)
@@ -37,7 +37,7 @@ impl IntoEvent for Event {
                 let index = unsafe { cast(button_idx) };
                 ::Event::ButtonReleased(index)
             },
-            _ => unexpected!()
+            _ => unimplemented!()
         }
     }
 }
@@ -66,15 +66,20 @@ impl fmt::Debug for OpenError {
         write!(fmt, "{}", self.err)
     }
 }
+impl fmt::Display for OpenError {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "{}", self.err)
+    }
+}
 
 impl ::Joystick for NativeJoystick {
     type WithState = NativeJoystick;
     type NativeEvent = Event;
     type OpenError = OpenError;
-    fn open(index: u8) -> Result<NativeJoystick, &'static str> {
+    fn open(index: u8) -> Result<NativeJoystick, OpenError> {
         match Joystick::open(index as i32) {
-            Ok(js) => Ok(NativeJoystick {js: js, sdl: None}),
-            Err(_) => Err("Could not open joystick")
+            Ok(js) => Ok(NativeJoystick { js: js, sdl: None }),
+            Err(err) => Err(OpenError { err: err })
         }
     }
     fn is_connected(&self) -> bool {
@@ -95,7 +100,7 @@ impl ::Joystick for NativeJoystick {
     fn get_battery(&self) -> Option<f32> {
         None
     }
-    fn poll_native(&mut self) -> Option<::Event> {
+    fn poll_native(&mut self) -> Option<Event> {
         if self.sdl.is_none() {
             let flags = INIT_GAME_CONTROLLER | INIT_EVENTS;
             self.sdl = Some(Rc::new(init(flags).unwrap()))
@@ -103,10 +108,9 @@ impl ::Joystick for NativeJoystick {
         let sdl = self.sdl.clone().unwrap();
         let mut pump = sdl.event_pump();
         for event in pump.poll_iter() {
-            use std::mem;
             match event {
-                Event::JoyAxisMotion(_) | Event::JoyButtonDown(_) | Event::JoyButtonUp(_) => {
-                    return Some(event.into_event())
+                Event::JoyAxisMotion{ .. } | Event::JoyButtonDown{ .. } | Event::JoyButtonUp{ .. } => {
+                    return Some(event)
                 },
                 _ => ()
             }
