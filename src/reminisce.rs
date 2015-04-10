@@ -198,20 +198,10 @@ pub enum Event {
 	/// which is between `MIN_JOYSTICK_VALUE` and `MAX_JOYSTICK_VALUE`
 	AxisMoved(Axis, i16)
 }
-/// Convert a raw event into a Reminisce event
-pub trait IntoEvent {
-	/// Convert this into a Reminisce event
-	fn into_event(self) -> Event;
-}
-
-impl IntoEvent for Event {
-    /// Convert the event into itself
-    ///
-    /// The only reason this exists is because windows doesn't have events so the backend has to
-    /// make reminisce events directly and pretend that they are the native events.
-    fn into_event(self) -> Event {
-        self
-    }
+impl From<<NativeJoystick as Joystick>::NativeEvent> for Event {
+	fn from(event: <NativeJoystick as Joystick>::NativeEvent) -> Event {
+        native::convert_event(event)
+	}
 }
 
 /// A joystick or gamepad
@@ -236,7 +226,7 @@ impl IntoEvent for Event {
 /// }
 /// println!("{}, {}", x, y);
 /// ```
-pub trait Joystick : Sized {
+pub trait Joystick : Sized where Event: From<Self::NativeEvent> {
 	/// The version of this joystick that includes the state
     ///
     /// On Linux, this is a wrapper around the joystick, but on Windows,
@@ -245,7 +235,7 @@ pub trait Joystick : Sized {
 	type WithState : StatefulJoystick;
 
     /// The event that this joystick processes
-    type NativeEvent: IntoEvent;
+    type NativeEvent;
 
     /// The error that could be thrown while trying to open the joystick
     type OpenError: Error + Debug;
@@ -301,7 +291,7 @@ pub trait Joystick : Sized {
     /// This runs `self.poll_native()` then converts it into an event using
     /// the `into_event` method.
     fn poll(&mut self) -> Option<Event> {
-        self.poll_native().map(|e| e.into_event())
+        self.poll_native().map(|e| e.into())
     }
 
     /// Map the axes and buttons of this joystick by wrapping it in a `JoystickMapper`
@@ -414,7 +404,7 @@ pub struct Poller<'a, J> where J:Joystick+'a {
     joystick: &'a mut J
 }
 
-impl<'a, J> Iterator for Poller<'a, J> where J:Joystick {
+impl<'a, J> Iterator for Poller<'a, J> where J:Joystick, Event: From<<J as Joystick>::NativeEvent> {
 	type Item = Event;
     /// This calls the `joystick.poll()` method to poll for the next event
 	fn next(&mut self) -> Option<Event> {

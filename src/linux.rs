@@ -227,14 +227,14 @@ pub struct LinuxEvent {
 	/// axis / button number
 	number: u8
 }
-impl ::IntoEvent for LinuxEvent {
-	fn into_event(self) -> ::Event {
-		use std::mem::transmute as cast;
-		match (self._type, self.value) {
-			(1, 0) => ::Event::ButtonReleased(unsafe { cast(self.number) }),
-			(1, 1) => ::Event::ButtonPressed(unsafe { cast(self.number) }),
-			(2, _) => ::Event::AxisMoved(unsafe { cast(self.number) }, self.value),
-			_ => panic!("Bad type and value {} {} for joystick", self._type, self.value)
-		}
+
+/// Convert the event
+pub fn convert_event(event: LinuxEvent) -> ::Event {
+	use std::mem::transmute as cast;
+	match (event._type, event.value) {
+		(1, 0) => ::Event::ButtonReleased(unsafe { cast(event.number) }),
+		(1, 1) => ::Event::ButtonPressed(unsafe { cast(event.number) }),
+		(2, _) => ::Event::AxisMoved(unsafe { cast(event.number) }, event.value),
+		_ => panic!("Bad type and value {} {} for joystick", event._type, event.value)
 	}
 }

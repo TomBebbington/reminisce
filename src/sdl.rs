@@ -21,27 +21,25 @@ impl NativeJoystick {
     }
 }
 
-impl ::IntoEvent for Event {
-    fn into_event(self) -> ::Event {
-        use std::mem::transmute as cast;
-        match self {
-            Event::JoyAxisMotion {axis_idx, value, ..} => {
-                let index = unsafe { cast(axis_idx) };
-                ::Event::AxisMoved(index, value)
-            },
-            Event::JoyButtonDown {button_idx, ..} => {
-                let index = unsafe { cast(button_idx) };
-                ::Event::ButtonPressed(index)
-            },
-            Event::JoyButtonUp {button_idx, ..} => {
-                let index = unsafe { cast(button_idx) };
-                ::Event::ButtonReleased(index)
-            },
-            _ => unimplemented!()
-        }
+/// Convert the SDL event into a Reminisce event
+pub fn convert_event(event: Event) -> ::Event {
+    use std::mem::transmute as cast;
+    match event {
+        Event::JoyAxisMotion {axis_idx, value, ..} => {
+            let index = unsafe { cast(axis_idx) };
+            ::Event::AxisMoved(index, value)
+        },
+        Event::JoyButtonDown {button_idx, ..} => {
+            let index = unsafe { cast(button_idx) };
+            ::Event::ButtonPressed(index)
+        },
+        Event::JoyButtonUp {button_idx, ..} => {
+            let index = unsafe { cast(button_idx) };
+            ::Event::ButtonReleased(index)
+        },
+        _ => unimplemented!()
     }
 }
-
 /// Scan for joysticks and initialise SDL
 pub fn scan() -> Vec<NativeJoystick> {
     let flags = INIT_GAME_CONTROLLER | INIT_EVENTS;
