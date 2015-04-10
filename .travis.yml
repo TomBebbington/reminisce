@@ -2,6 +2,11 @@ language: rust
 os:
     - linux
     - osx
+
+install:
+    - sudo add-apt-repository ppa:team-xbmc/ppa -y
+    - sudo apt-get update -q
+    - sudo apt-get install libsdl2-dev
 script:
     - cargo build
     - cargo build --features sdl
