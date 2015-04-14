@@ -1,6 +1,6 @@
 [package]
 name = "reminisce"
-version = "0.9.0"
+version = "0.9.1"
 authors = ["Tom Bebbington <tophattedcoder@gmail.com>"]
 description = "A joystick detection and event-handling library"
 documentation = "http://www.rustdox.com/TomBebbington/reminisce/reminisce/"
