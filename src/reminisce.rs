@@ -1,6 +1,26 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
-//! reading from joysticks at a low level across many different operting
+//! reading from joysticks at a low level across many different operating
 //! systems.
+//!
+//! Scanning for joysticks
+//! ----------------------
+//! To scan for joysticks, a `Context` must be created.
+//! ``` rust
+//! use reminisce::*;
+//! let context = NativeContext::new();
+//! println!("{} joysticks connected", context.num_joysticks());
+//! ```
+//!
+//! Scanning for events
+//! -------------------
+//! To scan events, a `Context` must be created and polled.
+//! ``` rust
+//! use reminisce::*;
+//! let context = NativeContext::new();
+//! while let Some(event) = context.poll() {
+//!     println!("{:?}", event);
+//! }
+//! ```
 extern crate libc;
 #[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
