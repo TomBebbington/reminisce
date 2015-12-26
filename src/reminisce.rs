@@ -122,7 +122,7 @@ pub trait Context: Sized {
     /// The kind of joystick this context tracks.
     type Joystick : Joystick;
 
-    /// Create a new context.
+    /// Create a new context and scan for joysticks.
     fn new() -> Self;
 
     /// Returns the number of joysticks connected.
@@ -131,7 +131,7 @@ pub trait Context: Sized {
     /// Return a reference to the joysticks connected.
     fn get_joysticks(&self) -> &[Self::Joystick];
 
-    /// Poll this context for events.
+    /// Poll this context non-blockingly for events from any joysticks contained inside.
     fn poll(&mut self) -> Option<Event>;
 
     /// Iterate through the events that haven't been processed yet

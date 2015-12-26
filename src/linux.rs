@@ -1,4 +1,4 @@
-use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, read};
+use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, O_NONBLOCK, read};
 use glob::glob;
 use std::borrow::Cow;
 use std::ffi::{CStr, CString};
@@ -107,7 +107,7 @@ impl ::Joystick for NativeJoystick {
 		let path = format!("/dev/input/js{}", index);
 		unsafe {
 			let c_path = CString::new(path.as_bytes()).unwrap();
-			let fd = open(c_path.as_ptr(), O_RDONLY | 0x800);
+			let fd = open(c_path.as_ptr(), O_RDONLY | O_NONBLOCK);
 			if fd == -1 {
 				Err(Error::last_os_error())
 			} else {
