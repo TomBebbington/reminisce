@@ -1,9 +1,10 @@
 use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, read};
+use glob::glob;
 use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 use std::io::Error;
 use std::mem;
-use Joystick;
+use {Context, Event, Joystick};
 
 static JSIOCGAXES: c_uint = 2147576337;
 static JSIOCGBUTTONS: c_uint = 2147576338;
@@ -16,15 +17,16 @@ extern {
 	fn ioctl(fd: c_uint, op: c_uint, result: *mut c_char);
 }
 
-/// Scan for joysticks
-pub fn scan() -> Vec<NativeJoystick> {
-	use std::fs;
-	// So many ifs...
-	let mut joysticks = Vec::with_capacity(4);
-	if let Ok(entries) = fs::walk_dir("/dev/input/") {
-		for entry in entries {
-			if let Ok(entry) = entry {
-				let path = entry.path();
+pub struct NativeContext {
+	joysticks: Vec<NativeJoystick>,
+	pending: Vec<Event>
+}
+impl Context for NativeContext {
+	type Joystick = NativeJoystick;
+	fn new() -> NativeContext {
+		let mut joysticks = Vec::with_capacity(4);
+		for entry in glob("/dev/input/js*").unwrap() {
+			if let Ok(path) = entry {
 				if let Some(name) = path.file_name() {
 					if let Some(name) = name.to_str() {
 						if name.starts_with("js") {
@@ -38,10 +40,26 @@ pub fn scan() -> Vec<NativeJoystick> {
 				}
 			}
 		}
+		let pending = joysticks.iter().by_ref().map(|js:&NativeJoystick| Event::Connected(js.index)).collect();
+		NativeContext {
+			joysticks: joysticks,
+			pending: pending
+		}
 	}
-	joysticks
+	fn get_joysticks(&self) -> &[NativeJoystick] {
+		return &self.joysticks;
+	}
+	fn poll(&mut self) -> Option<Event> {
+		match self.pending.pop() {
+			Some(Event::Disconnected(i)) => {
+				self.joysticks.remove(i as usize);
+				Some(Event::Disconnected(i))
+			}
+			Some(v) => Some(v),
+			None => self.joysticks.iter_mut().filter(|js| js.connected).flat_map(|js| js.poll()).next()
+		}
+	}
 }
-
 /// Represents a system joystick
 pub struct NativeJoystick {
 	index: u8,
@@ -49,9 +67,36 @@ pub struct NativeJoystick {
 	connected: bool
 }
 
+impl NativeJoystick {
+	fn poll(&mut self) -> Option<Event> {
+		unsafe {
+			let mut event:LinuxEvent = mem::uninitialized();
+			loop {
+				let event_size = mem::size_of::<LinuxEvent>() as c_ulong;
+				if read(self.fd, mem::transmute(&mut event), event_size as usize) == -1 {
+					let err = Error::last_os_error();
+					match Error::last_os_error().raw_os_error().expect("Bad OS Error") {
+						19 => {
+							self.connected = false;
+							return Some(Event::Disconnected(self.index))
+						},
+						11 => (),
+						_ => panic!("{}", err)
+					}
+				} else if event._type & 0x80 == 0 {
+					return Some(match (event._type, event.value) {
+						(1, 0) => Event::ButtonReleased(self.index, event.number),
+						(1, 1) => Event::ButtonPressed(self.index, event.number),
+						(2, _) => Event::AxisMoved(self.index, event.number, event.value),
+						_ => panic!("Bad type and value {} {} for joystick", event._type, event.value)
+					})
+				}
+			}
+		}
+	}
+}
+
 impl ::Joystick for NativeJoystick {
-	type WithState = StatefulNativeJoystick;
-	type NativeEvent = LinuxEvent;
 	type OpenError = Error;
 	/// This tries to open the interface `/dev/input/js...` and will return the
 	/// OS-level error if it fails to open this
@@ -59,7 +104,7 @@ impl ::Joystick for NativeJoystick {
 		let path = format!("/dev/input/js{}", index);
 		unsafe {
 			let c_path = CString::new(path.as_bytes()).unwrap();
-			let fd =  open(c_path.as_ptr(), O_RDONLY | 0x800);
+			let fd = open(c_path.as_ptr(), O_RDONLY | 0x800);
 			if fd == -1 {
 				Err(Error::last_os_error())
 			} else {
@@ -68,27 +113,6 @@ impl ::Joystick for NativeJoystick {
 					fd: fd,
 					connected: true
 				})
-			}
-		}
-	}
-	/// This reads from the interface in non-blocking mode and converts the native
-	/// event into a Reminisce event
-	fn poll_native(&mut self) -> Option<LinuxEvent> {
-		unsafe {
-			let mut event:LinuxEvent = mem::uninitialized();
-			loop {
-				let event_size = mem::size_of::<LinuxEvent>() as c_ulong;
-				if read(self.fd, mem::transmute(&mut event), event_size) == -1 {
-					let err = Error::last_os_error();
-					match Error::last_os_error().raw_os_error().expect("Bad OS Error") {
-						19 => self.connected = false,
-						11 => (),
-						_ => panic!("{}", err)
-					}
-					return None
-				} else if event._type & 0x80 == 0 {
-					return Some(event)
-				}
 			}
 		}
 	}
@@ -128,9 +152,6 @@ impl ::Joystick for NativeJoystick {
 	fn get_battery(&self) -> Option<f32> {
 		None
 	}
-	fn with_state(self) -> StatefulNativeJoystick {
-		StatefulNativeJoystick::wrap(self)
-	}
 }
 
 impl Drop for NativeJoystick {
@@ -145,77 +166,6 @@ impl Drop for NativeJoystick {
 	}
 }
 
-/// The default joystick that tracks its state
-pub struct StatefulNativeJoystick {
-	js: NativeJoystick,
-	axes: Vec<i16>,
-	buttons: Vec<bool>
-}
-impl StatefulNativeJoystick {
-	/// Wrap a joystick
-	pub fn wrap(js: NativeJoystick) -> StatefulNativeJoystick {
-		StatefulNativeJoystick {
-			axes: vec![0; js.get_num_axes() as usize],
-			buttons: vec![false; js.get_num_buttons() as usize],
-			js: js
-		}
-	}
-}
-impl ::Joystick for StatefulNativeJoystick {
-	type WithState = StatefulNativeJoystick;
-	type NativeEvent = LinuxEvent;
-	type OpenError = Error;
-
-	fn open(index: u8) -> Result<StatefulNativeJoystick, Error> {
-		::Joystick::open(index).map(|js| StatefulNativeJoystick::wrap(js))
-	}
-	fn is_connected(&self) -> bool {
-		self.js.is_connected()
-	}
-	fn get_id(&self) -> Cow<str> {
-		self.js.get_id()
-	}
-	fn get_index(&self) -> u8 {
-		self.js.get_index()
-	}
-	fn get_num_axes(&self) -> u8 {
-		self.js.get_num_axes()
-	}
-	fn get_num_buttons(&self) -> u8 {
-		self.js.get_num_buttons()
-	}
-	fn get_battery(&self) -> Option<f32> {
-		None
-	}
-	fn poll_native(&mut self) -> Option<LinuxEvent> {
-		self.js.poll_native()
-	}
-	fn poll(&mut self) -> Option<::Event> {
-		let event = self.js.poll();
-		match event {
-			Some(::Event::AxisMoved(i, v)) => self.axes[i as usize] = v,
-			Some(::Event::ButtonPressed(i)) => self.buttons[i as usize] = true,
-			Some(::Event::ButtonReleased(i)) => self.buttons[i as usize] = false,
-			_ => ()
-		}
-		event
-	}
-	fn with_state(self) -> StatefulNativeJoystick {
-		self
-	}
-}
-impl ::StatefulJoystick for StatefulNativeJoystick {
-	fn get_axis(&self, index: ::Axis) -> Option<i16> {
-		self.axes.get(index as usize).cloned()
-	}
-	fn get_button(&self, index: ::Button) -> Option<bool> {
-		self.buttons.get(index as usize).cloned()
-	}
-	fn update(&mut self) {
-		while let Some(_) = self.poll() {}
-	}
-}
-
 #[repr(C)]
 pub struct LinuxEvent {
 	/// timestamp in milleseconds
@@ -226,15 +176,4 @@ pub struct LinuxEvent {
 	_type: u8,
 	/// axis / button number
 	number: u8
-}
-
-/// Convert the event
-pub fn convert_event(event: LinuxEvent) -> ::Event {
-	use std::mem::transmute as cast;
-	match (event._type, event.value) {
-		(1, 0) => ::Event::ButtonReleased(unsafe { cast(event.number) }),
-		(1, 1) => ::Event::ButtonPressed(unsafe { cast(event.number) }),
-		(2, _) => ::Event::AxisMoved(unsafe { cast(event.number) }, event.value),
-		_ => panic!("Bad type and value {} {} for joystick", event._type, event.value)
-	}
 }

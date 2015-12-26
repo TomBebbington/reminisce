@@ -14,8 +14,11 @@ name = "reminisce"
 
 [features]
 sdl = [ "sdl2" ]
-mappings = [ "libc" ]
 default = [ "libc" ]
+
+[dependencies.glob]
+version = "*"
+optional = false
 
 [dependencies.libc]
 version = "*"
