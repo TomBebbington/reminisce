@@ -1,7 +1,5 @@
 extern crate reminisce;
 use reminisce::*;
-use std::thread;
-use std::time::Duration;
 fn main() {
 	let mut context = NativeContext::new();
 	for js in context.get_joysticks() {

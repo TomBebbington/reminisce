@@ -44,7 +44,6 @@ pub static MAX_AXIS_VALUE:i16 = 32767;
 pub static MIN_AXIS_VALUE:i16 = -32767;
 
 use std::borrow::Cow;
-use std::error::Error;
 use std::fmt::Debug;
 
 #[cfg(feature = "mappings")]
@@ -125,6 +124,10 @@ pub trait Context: Sized {
     /// Create a new context.
     fn new() -> Self;
 
+
+    /// Returns the number of joysticks connected.
+    fn num_joysticks(&self) -> usize;
+
     /// Return a reference to the joysticks connected.
     fn get_joysticks(&self) -> &[Self::Joystick];
 
@@ -148,7 +151,7 @@ impl<'a> IntoIterator for &'a mut NativeContext {
 /// A joystick or gamepad.
 pub trait Joystick : Sized {
     /// The error that could be thrown while trying to open the joystick
-    type OpenError: Error + Debug;
+    type OpenError: Debug;
 
     /// Attempts to open a joystick from its index
     ///

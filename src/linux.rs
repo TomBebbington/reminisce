@@ -46,6 +46,9 @@ impl Context for NativeContext {
 			pending: pending
 		}
 	}
+	fn num_joysticks(&self) -> usize {
+		return self.joysticks.len();
+	}
 	fn get_joysticks(&self) -> &[NativeJoystick] {
 		return &self.joysticks;
 	}

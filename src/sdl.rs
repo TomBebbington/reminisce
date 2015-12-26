@@ -1,133 +1,76 @@
 use sdl2::joystick::*;
-use sdl2::event::Event;
-use sdl2::{init, Sdl, INIT_GAME_CONTROLLER, INIT_EVENTS};
+use sdl2::{init, event, Sdl, JoystickSubsystem, ErrorMessage};
 
 use std::borrow::Cow;
-use std::error::Error;
-use std::fmt;
-use std::rc::Rc;
 
-/// A native joystick using SDL
-pub struct NativeJoystick {
-    js: Joystick,
-    sdl: Option<Rc<Sdl>>
-}
+use {Context, Event};
 
-impl NativeJoystick {
-    /// Set the context of the joystick
-    pub fn in_context(mut self, sdl: Rc<Sdl>) -> NativeJoystick {
-        self.sdl = Some(sdl);
-        self
-    }
+pub struct NativeContext {
+    sdl: Sdl,
+    system: JoystickSubsystem,
+    joysticks: Vec<NativeJoystick>
 }
-
-/// Convert the SDL event into a Reminisce event
-pub fn convert_event(event: Event) -> ::Event {
-    use std::mem::transmute as cast;
-    match event {
-        Event::JoyAxisMotion {axis_idx, value, ..} => {
-            let index = unsafe { cast(axis_idx) };
-            ::Event::AxisMoved(index, value)
-        },
-        Event::JoyButtonDown {button_idx, ..} => {
-            let index = unsafe { cast(button_idx) };
-            ::Event::ButtonPressed(index)
-        },
-        Event::JoyButtonUp {button_idx, ..} => {
-            let index = unsafe { cast(button_idx) };
-            ::Event::ButtonReleased(index)
-        },
-        _ => unimplemented!()
-    }
-}
-/// Scan for joysticks and initialise SDL
-pub fn scan() -> Vec<NativeJoystick> {
-    let flags = INIT_GAME_CONTROLLER | INIT_EVENTS;
-    let sdl = Rc::new(init(flags).unwrap());
-    let num = num_joysticks().unwrap() as u8;
-    (0..num).filter_map(|i| ::Joystick::open(i).ok().map(|js:NativeJoystick| js.in_context(sdl.clone()))).collect()
-}
-
-pub struct OpenError {
-    err: String
-}
-impl Error for OpenError {
-    fn description(&self) -> &str {
-        &self.err
-    }
-    fn cause(&self) -> Option<&Error> {
-        None
-    }
-}
-impl fmt::Debug for OpenError {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}", self.err)
-    }
-}
-impl fmt::Display for OpenError {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}", self.err)
-    }
-}
-
-impl ::Joystick for NativeJoystick {
-    type WithState = NativeJoystick;
-    type NativeEvent = Event;
-    type OpenError = OpenError;
-    fn open(index: u8) -> Result<NativeJoystick, OpenError> {
-        match Joystick::open(index as i32) {
-            Ok(js) => Ok(NativeJoystick { js: js, sdl: None }),
-            Err(err) => Err(OpenError { err: err })
+impl Context for NativeContext {
+    type Joystick = NativeJoystick;
+    fn new() -> Self {
+        let sdl = init().unwrap();
+        let system = sdl.joystick().unwrap();
+        NativeContext {
+            sdl: sdl,
+            system: system,
+            joysticks: Vec::new()
         }
     }
+    fn num_joysticks(&self) -> usize {
+        self.system.num_joysticks().unwrap_or(0) as usize
+    }
+    fn get_joysticks(&self) -> &[NativeJoystick] {
+        &self.joysticks
+    }
+    fn poll(&mut self) -> Option<Event> {
+        self.sdl.event_pump().unwrap().poll_iter().filter_map(|e| match e {
+            event::Event::JoyDeviceAdded { which , ..} => {
+                self.joysticks.push(self.system.open(which as u32).unwrap());
+                Some(Event::Connected(which as ::JoystickIndex))
+            },
+            event::Event::JoyDeviceRemoved { which, .. } => {
+                self.joysticks.remove(which as usize);
+                Some(Event::Disconnected(which as ::JoystickIndex))
+            },
+            event::Event::JoyButtonDown { which, button_idx, .. } =>
+                Some(Event::ButtonPressed(which as ::JoystickIndex, button_idx)),
+            event::Event::JoyButtonUp { which, button_idx, .. } =>
+                Some(Event::ButtonReleased(which as ::JoystickIndex, button_idx)),
+            _ => None,
+        }).next()
+    }
+}
+
+
+/// A native joystick using SDL
+pub type NativeJoystick = Joystick;
+
+impl ::Joystick for NativeJoystick {
+    type OpenError = ErrorMessage;
+    fn open(index: u8) -> Result<NativeJoystick, ErrorMessage> {
+        init().unwrap().joystick().unwrap().open(index as u32)
+    }
     fn is_connected(&self) -> bool {
-        self.js.get_attached()
+        self.attached()
     }
     fn get_index(&self) -> u8 {
-        self.js.get_instance_id().unwrap() as u8
+        self.instance_id() as u8
     }
     fn get_id(&self) -> Cow<str> {
-        self.js.name().into()
+        self.name().into()
     }
     fn get_num_buttons(&self) -> u8 {
-        self.js.get_num_buttons().unwrap() as u8
+        self.num_buttons() as u8
     }
     fn get_num_axes(&self) -> u8 {
-        self.js.get_num_axis().unwrap() as u8
+        self.num_axes() as u8
     }
     fn get_battery(&self) -> Option<f32> {
         None
-    }
-    fn poll_native(&mut self) -> Option<Event> {
-        if self.sdl.is_none() {
-            let flags = INIT_GAME_CONTROLLER | INIT_EVENTS;
-            self.sdl = Some(Rc::new(init(flags).unwrap()))
-        }
-        let sdl = self.sdl.clone().unwrap();
-        let mut pump = sdl.event_pump();
-        for event in pump.poll_iter() {
-            match event {
-                Event::JoyAxisMotion{ .. } | Event::JoyButtonDown{ .. } | Event::JoyButtonUp{ .. } => {
-                    return Some(event)
-                },
-                _ => ()
-            }
-        }
-        None
-    }
-    fn with_state(self) -> NativeJoystick {
-        self
-    }
-}
-
-impl ::StatefulJoystick for NativeJoystick {
-    fn get_axis(&self, axis: ::Axis) -> Option<i16> {
-        self.js.get_axis(axis as u8 as i32).ok()
-    }
-    fn get_button(&self, button: ::Button) -> Option<bool> {
-        self.js.get_button(button as u8 as i32).ok()
-    }
-    fn update(&mut self) {
-        update();
     }
 }
