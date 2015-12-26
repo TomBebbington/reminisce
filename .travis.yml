@@ -10,12 +10,8 @@ install:
 script:
     - cargo build --verbose
     - cargo build --verbose --features sdl
-    - cargo build --verbose --features mappings
-    - cargo build --verbose --features "sdl mappings"
     - cargo test --verbose
     - cargo test --verbose --features sdl
-    - cargo test --verbose --features mappings
-    - cargo test --verbose --features "sdl mappings"
 after_success: |
     - rm -rf target/doc
     - cargo doc
