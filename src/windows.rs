@@ -122,10 +122,10 @@ impl ::Joystick for NativeJoystick {
 		self.update();
 		self.events.pop_back()
 	}
-	fn is_connected(&self) -> bool {
+	fn connected(&self) -> bool {
 		true
 	}
-	fn get_battery(&self) -> Option<f32> {
+	fn battery(&self) -> Option<f32> {
 		unsafe {
 			let mut battery = mem::uninitialized();
 			XInputGetBatteryInformation(self.index as u32, 0, &mut battery);
@@ -142,16 +142,16 @@ impl ::Joystick for NativeJoystick {
 			}
 		}
 	}
-	fn get_id(&self) -> Cow<str> {
+	fn id(&self) -> Cow<str> {
 		"XInput Device".into()
 	}
-	fn get_index(&self) -> u8 {
+	fn index(&self) -> u8 {
 		self.index
 	}
-	fn get_num_buttons(&self) -> u8 {
+	fn num_buttons(&self) -> u8 {
 		4
 	}
-	fn get_num_axes(&self) -> u8 {
+	fn num_axes(&self) -> u8 {
 		4
 	}
 	fn with_state(self) -> NativeJoystick {

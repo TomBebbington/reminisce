@@ -63,26 +63,26 @@ impl ::Joystick for NativeJoystick {
             }
         }
     }
-    fn is_connected(&self) -> bool {
+    fn connected(&self) -> bool {
         self.last.connected
     }
-    fn get_id(&self) -> Cow<str> {
+    fn id(&self) -> Cow<str> {
         unsafe {
             use std::str;
             let bytes = CStr::from_ptr(self.last.id.as_ptr()).to_bytes();
             str::from_utf8_unchecked(bytes).into()
         }
     }
-    fn get_battery(&self) -> Option<f32> {
+    fn battery(&self) -> Option<f32> {
         None
     }
-    fn get_index(&self) -> u8 {
+    fn index(&self) -> u8 {
         self.last.index as u8
     }
-    fn get_num_axes(&self) -> u8 {
+    fn num_axes(&self) -> u8 {
         self.last.num_axes as u8
     }
-    fn get_num_buttons(&self) -> u8 {
+    fn num_buttons(&self) -> u8 {
         self.last.num_buttons as u8
     }
     fn with_state(self) -> NativeJoystick {

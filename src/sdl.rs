@@ -55,22 +55,22 @@ impl ::Joystick for NativeJoystick {
     fn open(index: u8) -> Result<NativeJoystick, ErrorMessage> {
         init().unwrap().joystick().unwrap().open(index as u32)
     }
-    fn is_connected(&self) -> bool {
+    fn connected(&self) -> bool {
         self.attached()
     }
-    fn get_index(&self) -> u8 {
+    fn index(&self) -> u8 {
         self.instance_id() as u8
     }
-    fn get_id(&self) -> Cow<str> {
+    fn id(&self) -> Cow<str> {
         self.name().into()
     }
-    fn get_num_buttons(&self) -> u8 {
+    fn num_buttons(&self) -> u8 {
         self.num_buttons() as u8
     }
-    fn get_num_axes(&self) -> u8 {
+    fn num_axes(&self) -> u8 {
         self.num_axes() as u8
     }
-    fn get_battery(&self) -> Option<f32> {
+    fn battery(&self) -> Option<f32> {
         None
     }
 }

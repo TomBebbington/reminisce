@@ -3,9 +3,9 @@ use reminisce::*;
 fn main() {
 	let mut context = NativeContext::new();
 	for js in context.get_joysticks() {
-		println!("Joystick #{}: {}", js.get_index(), js.get_id());
-		println!("\tAxes: {}", js.get_num_axes());
-		println!("\tButtons: {}", js.get_num_buttons());
+		println!("Joystick #{}: {}", js.index(), js.id());
+		println!("\tAxes: {}", js.num_axes());
+		println!("\tButtons: {}", js.num_buttons());
 	}
 	loop {
 		for event in context.poll() {

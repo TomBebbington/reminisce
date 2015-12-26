@@ -1,5 +1,6 @@
 //! Reminisce is a lightweight library intended to be used for detecting and
-//! reading from joysticks.
+//! reading from joysticks at a low level across many different operting
+//! systems.
 extern crate libc;
 #[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
@@ -53,6 +54,7 @@ pub type Axis = u8;
 pub type Button = u8;
 
 /// A joystick index.
+
 pub type JoystickIndex = u8;
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// An event emitted by a joystick
@@ -103,7 +105,6 @@ pub trait Context: Sized {
     /// Create a new context.
     fn new() -> Self;
 
-
     /// Returns the number of joysticks connected.
     fn num_joysticks(&self) -> usize;
 
@@ -139,7 +140,7 @@ pub trait Joystick : Sized {
     /// ``` rust
     /// use reminisce::*;
     /// if let Ok(joystick) = NativeJoystick::open(0) {
-    ///     println!("{}", joystick.get_id())
+    ///     println!("{}", joystick.id())
     /// } else {
     ///     println!("No joystick plugged in")
     /// }
@@ -147,32 +148,32 @@ pub trait Joystick : Sized {
     fn open(index: JoystickIndex) -> Result<Self, Self::OpenError>;
 
     /// Check if the joystick is still connected.
-    fn is_connected(&self) -> bool;
+    fn connected(&self) -> bool;
 
     /// Get the identifier of this joystick.
     ///
     /// This is copy-on-write because it can be a borrowed or owned String,
     /// depending on the implementation.
-    fn get_id(&self) -> Cow<str>;
+    fn id(&self) -> Cow<str>;
 
     /// Get the index of this joystick.
-    fn get_index(&self) -> JoystickIndex;
+    fn index(&self) -> JoystickIndex;
 
     /// Get the number of axes this joystick has
     ///
     /// This is capped at 6 axes for now.
-    fn get_num_axes(&self) -> Axis;
+    fn num_axes(&self) -> Axis;
 
     /// Get the number of buttons this joystick has
     ///
     /// This is capped at 16 buttons currently.
-    fn get_num_buttons(&self) -> Button;
+    fn num_buttons(&self) -> Button;
 
     /// Get the battery level of this joystick
     ///
     /// Returns none if the joystick is wired or this operation is not supported
     /// by the backend
-    fn get_battery(&self) -> Option<f32>;
+    fn battery(&self) -> Option<f32>;
 }
 
 /// A joystick that tracks its state.
@@ -188,7 +189,7 @@ impl<J> StatefulJoystick<J> where J: Joystick {
     }
     /// Check if the button given is down.
     pub fn get_button(&self, button: Button) -> Option<bool> {
-        if button < self.joystick.get_num_buttons() {
+        if button < self.joystick.num_buttons() {
             Some(self.buttons & (1 << button) > 0)
         } else {
             None
@@ -196,7 +197,7 @@ impl<J> StatefulJoystick<J> where J: Joystick {
     }
     /// Update this joystick with the event given.
     pub fn process(&mut self, event: Event) {
-        let index = self.joystick.get_index();
+        let index = self.joystick.index();
         match event {
             Event::ButtonPressed(i, b) if i == index => {
                 self.buttons |= (i as i32) << b;
@@ -215,30 +216,30 @@ impl<J> Joystick for StatefulJoystick<J> where J: Joystick {
     type OpenError = J::OpenError;
     fn open(index: JoystickIndex) -> Result<Self, Self::OpenError> {
         let joystick = try!(J::open(index));
-        let axes = (0..joystick.get_num_axes()).map(|_| 0).collect();
+        let axes = (0..joystick.num_axes()).map(|_| 0).collect();
         Ok(StatefulJoystick {
             joystick: joystick,
             buttons: 0,
             axes: axes
         })
     }
-    fn is_connected(&self) -> bool {
-        self.joystick.is_connected()
+    fn connected(&self) -> bool {
+        self.joystick.connected()
     }
-    fn get_id(&self) -> Cow<str> {
-        self.joystick.get_id()
+    fn id(&self) -> Cow<str> {
+        self.joystick.id()
     }
-    fn get_index(&self) -> JoystickIndex {
-        self.joystick.get_index()
+    fn index(&self) -> JoystickIndex {
+        self.joystick.index()
     }
-    fn get_num_axes(&self) -> Axis {
-        self.joystick.get_num_axes()
+    fn num_axes(&self) -> Axis {
+        self.joystick.num_axes()
     }
-    fn get_num_buttons(&self) -> Button {
-        self.joystick.get_num_buttons()
+    fn num_buttons(&self) -> Button {
+        self.joystick.num_buttons()
     }
-    fn get_battery(&self) -> Option<f32> {
-        self.joystick.get_battery()
+    fn battery(&self) -> Option<f32> {
+        self.joystick.battery()
     }
 }
 

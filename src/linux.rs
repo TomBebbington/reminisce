@@ -119,24 +119,24 @@ impl ::Joystick for NativeJoystick {
 			}
 		}
 	}
-	fn is_connected(&self) -> bool {
+	fn connected(&self) -> bool {
 		self.connected
 	}
-	fn get_num_axes(&self) -> u8 {
+	fn num_axes(&self) -> u8 {
 		unsafe {
 			let mut num_axes: c_char = mem::uninitialized();
 			ioctl(self.fd as u32, JSIOCGAXES, &mut num_axes as *mut i8);
 			num_axes as u8
 		}
 	}
-	fn get_num_buttons(&self) -> u8 {
+	fn num_buttons(&self) -> u8 {
 		unsafe {
 			let mut num_buttons: c_char = mem::uninitialized();
 			ioctl(self.fd as u32, JSIOCGBUTTONS, &mut num_buttons as *mut i8);
 			num_buttons as u8
 		}
 	}
-	fn get_id(&self) -> Cow<str> {
+	fn id(&self) -> Cow<str> {
 		unsafe {
 			let text = String::with_capacity(JSIOCGID_LEN);
 			ioctl(self.fd as u32, JSIOCGID, text.as_ptr() as *mut i8);
@@ -148,11 +148,11 @@ impl ::Joystick for NativeJoystick {
 			new_text.into()
 		}
 	}
-	fn get_index(&self) -> u8 {
+	fn index(&self) -> u8 {
 		self.index
 	}
 	/// This is not supported on Linux so None is returned every time
-	fn get_battery(&self) -> Option<f32> {
+	fn battery(&self) -> Option<f32> {
 		None
 	}
 }
