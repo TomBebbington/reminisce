@@ -5,6 +5,7 @@
 //! Scanning for joysticks
 //! ----------------------
 //! To scan for joysticks, a `Context` must be created.
+//!
 //! ``` rust
 //! use reminisce::*;
 //! let context = NativeContext::new();
@@ -14,6 +15,7 @@
 //! Scanning for events
 //! -------------------
 //! To scan events, a `Context` must be created and polled.
+//!
 //! ``` rust
 //! use reminisce::*;
 //! let context = NativeContext::new();
@@ -263,7 +265,7 @@ impl<J> Joystick for StatefulJoystick<J> where J: Joystick {
     }
 }
 
-/// An iterator over a context's event queue
+/// An iterator over a context's event queue.
 pub struct Poller<'a, J> where J:Context+'a {
     context: &'a mut J
 }
