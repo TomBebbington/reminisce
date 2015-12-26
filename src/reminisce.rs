@@ -46,27 +46,6 @@ pub static MIN_AXIS_VALUE:i16 = -32767;
 use std::borrow::Cow;
 use std::fmt::Debug;
 
-#[cfg(feature = "mappings")]
-macro_rules! text_enum(
-    ($name:ident, $($enumer:ident => $text:expr),+) => (
-        impl ::std::fmt::Display for $name {
-            fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                write!(fmt, "{}", match *self {
-                    $($name::$enumer => $text),+
-                })
-            }
-        }
-        impl ::std::str::FromStr for $name {
-            type Err = String;
-            fn from_str(s: &str) -> Result<$name, String> {
-                match s {
-                    $($text => Ok($name::$enumer),)+
-                    _ => Err(format!("Could not make {} from {}", stringify!($name), s))
-                }
-            }
-        }
-    )
-);
 /// A direction on a joystick.
 pub type Axis = u8;
 
