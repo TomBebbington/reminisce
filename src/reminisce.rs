@@ -18,8 +18,8 @@
 //!
 //! ``` rust
 //! use reminisce::*;
-//! let context = NativeContext::new();
-//! while let Some(event) = context.poll() {
+//! let mut context = NativeContext::new();
+//! for event in &mut context {
 //!     println!("{:?}", event);
 //! }
 //! ```
@@ -31,13 +31,6 @@ extern crate libc;
 extern crate sdl2;
 
 extern crate glob;
-
-/// Someday, somehow
-#[cfg(all(feature = "emscripten", not(feature = "sdl")))]
-pub mod emscripten;
-
-#[cfg(all(feature = "emscripten", not(feature = "sdl")))]
-pub use emscripten as native;
 
 #[cfg(all(target_os = "linux", not(feature = "sdl")))]
 pub mod linux;
