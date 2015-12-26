@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 use std::io::Error;
 use std::mem;
-use {Context, Event, Joystick};
+use {Backend, Event, Joystick};
 
 static JSIOCGAXES: c_uint = 2147576337;
 static JSIOCGBUTTONS: c_uint = 2147576338;
@@ -17,13 +17,13 @@ extern {
 	fn ioctl(fd: c_uint, op: c_uint, result: *mut c_char);
 }
 
-pub struct NativeContext {
+pub struct Native {
 	joysticks: Vec<NativeJoystick>,
 	pending: Vec<Event>
 }
-impl Context for NativeContext {
+impl Backend for Native {
 	type Joystick = NativeJoystick;
-	fn new() -> NativeContext {
+	fn new() -> Native {
 		let mut joysticks = Vec::with_capacity(4);
 		for entry in glob("/dev/input/js*").unwrap() {
 			if let Ok(path) = entry {
@@ -41,7 +41,7 @@ impl Context for NativeContext {
 			}
 		}
 		let pending = joysticks.iter().by_ref().map(|js:&NativeJoystick| Event::Connected(js.index)).collect();
-		NativeContext {
+		Native {
 			joysticks: joysticks,
 			pending: pending
 		}
@@ -49,7 +49,7 @@ impl Context for NativeContext {
 	fn num_joysticks(&self) -> usize {
 		return self.joysticks.len();
 	}
-	fn get_joysticks(&self) -> &[NativeJoystick] {
+	fn joysticks(&self) -> &[NativeJoystick] {
 		return &self.joysticks;
 	}
 	fn poll(&mut self) -> Option<Event> {

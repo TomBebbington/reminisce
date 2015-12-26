@@ -3,19 +3,19 @@ use sdl2::{init, event, Sdl, JoystickSubsystem, ErrorMessage};
 
 use std::borrow::Cow;
 
-use {Context, Event};
+use {Backend, Event};
 
-pub struct NativeContext {
+pub struct Native {
     sdl: Sdl,
     system: JoystickSubsystem,
     joysticks: Vec<NativeJoystick>
 }
-impl Context for NativeContext {
+impl Backend for Native {
     type Joystick = NativeJoystick;
     fn new() -> Self {
         let sdl = init().unwrap();
         let system = sdl.joystick().unwrap();
-        NativeContext {
+        Native {
             sdl: sdl,
             system: system,
             joysticks: Vec::new()

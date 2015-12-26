@@ -4,22 +4,22 @@
 //!
 //! Scanning for joysticks
 //! ----------------------
-//! To scan for joysticks, a `Context` must be created.
+//! To scan for joysticks, a `Backend` must be created.
 //!
 //! ``` rust
-//! use reminisce::*;
-//! let context = NativeContext::new();
-//! println!("{} joysticks connected", context.num_joysticks());
+//! use reminisce::{Backend, Native};
+//! let backend = Native::new();
+//! println!("{} joysticks connected", backend.num_joysticks());
 //! ```
 //!
 //! Scanning for events
 //! -------------------
-//! To scan events, a `Context` must be created and polled.
+//! To scan events, a `Backend` must be created and polled.
 //!
 //! ``` rust
-//! use reminisce::*;
-//! let mut context = NativeContext::new();
-//! for event in &mut context {
+//! use reminisce::{Backend, Native};
+//! let mut backend = Native::new();
+//! for event in &mut backend {
 //!     println!("{:?}", event);
 //! }
 //! ```
@@ -50,8 +50,8 @@ pub mod sdl;
 #[cfg(feature = "sdl")]
 pub use sdl as native;
 
-
-pub use native::{NativeJoystick, NativeContext};
+/// The native joystick backend exposed as a `Backend`.
+pub use native::Native;
 
 
 /// The maximum axis value
@@ -90,16 +90,16 @@ pub enum Event {
     AxisMoved(JoystickIndex, Axis, i16)
 }
 
-/// A lightweight context that tracks and polls all the available joysticks.
+/// A lightweight Backend that tracks and polls all the available joysticks.
 ///
-/// Each `Context` has its own event queue tied to the events of the joysticks.
+/// Each `Backend` has its own event queue tied to the events of the joysticks.
 ///
 /// ``` rust
 /// use reminisce::*;
-/// let mut context = NativeContext::new();
+/// let mut backend = Native::new();
 /// let mut dir = 0;
 /// let mut left = 30;
-/// for event in &mut context {
+/// for event in &mut backend {
 ///     left -= 1;
 ///     if(left <= 0) { break }
 ///     match event {
@@ -111,32 +111,32 @@ pub enum Event {
 ///     }
 /// }
 /// ```
-pub trait Context: Sized {
-    /// The kind of joystick this context tracks.
+pub trait Backend: Sized + Send {
+    /// The kind of joystick this Backend tracks.
     type Joystick : Joystick;
 
-    /// Create a new context and scan for joysticks.
+    /// Create a new Backend and scan for joysticks.
     fn new() -> Self;
 
     /// Returns the number of joysticks connected.
     fn num_joysticks(&self) -> usize;
 
     /// Return a reference to the joysticks connected.
-    fn get_joysticks(&self) -> &[Self::Joystick];
+    fn joysticks(&self) -> &[Self::Joystick];
 
-    /// Poll this context non-blockingly for events from any joysticks.
+    /// Poll this Backend non-blockingly for events from any joysticks.
     fn poll(&mut self) -> Option<Event>;
 
     /// Iterate through the events that haven't been processed yet
     fn iter(&mut self) -> Poller<Self> {
-        Poller { context: self }
+        Poller { backend: self }
     }
 }
 
-impl<'a> IntoIterator for &'a mut NativeContext {
+impl<'a> IntoIterator for &'a mut Native {
     type Item = Event;
-    type IntoIter = Poller<'a, NativeContext>;
-    fn into_iter(self) -> Poller<'a, NativeContext> {
+    type IntoIter = Poller<'a, Native>;
+    fn into_iter(self) -> Poller<'a, Native> {
         self.iter()
     }
 }
@@ -151,8 +151,8 @@ pub trait Joystick : Sized {
     /// If an error occurs, this will return the textual representation of that error.
     ///
     /// ``` rust
-    /// use reminisce::*;
-    /// if let Ok(joystick) = NativeJoystick::open(0) {
+    /// use reminisce::{Backend, Joystick, Native};
+    /// if let Ok(joystick) = <Native as Backend>::Joystick::open(0) {
     ///     println!("{}", joystick.id())
     /// } else {
     ///     println!("No joystick plugged in")
@@ -258,15 +258,15 @@ impl<J> Joystick for StatefulJoystick<J> where J: Joystick {
     }
 }
 
-/// An iterator over a context's event queue.
-pub struct Poller<'a, J> where J:Context+'a {
-    context: &'a mut J
+/// An iterator over a Backend's event queue.
+pub struct Poller<'a, J> where J:Backend+'a {
+    backend: &'a mut J
 }
 
-impl<'a, C> Iterator for Poller<'a, C> where C:Context {
+impl<'a, C> Iterator for Poller<'a, C> where C:Backend {
     type Item = Event;
-    /// This calls the `context.poll()` method to poll for the next event
+    /// This calls the `Backend.poll()` method to poll for the next event
     fn next(&mut self) -> Option<Event> {
-        self.context.poll()
+        self.backend.poll()
     }
 }

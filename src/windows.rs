@@ -183,7 +183,7 @@ macro_rules! event{
 	});
 }
 impl ::StatefulJoystick for NativeJoystick {
-	fn get_axis(&self, index: ::Axis) -> Option<i16> {
+	fn axis(&self, index: ::Axis) -> Option<i16> {
 		match index {
 			::Axis::LeftX => Some(self.last.thumb_lx),
 			::Axis::LeftY => Some(self.last.thumb_ly),
@@ -192,7 +192,7 @@ impl ::StatefulJoystick for NativeJoystick {
 			_ => None
 		}
 	}
-	fn get_button(&self, index: ::Button) -> Option<bool> {
+	fn button(&self, index: ::Button) -> Option<bool> {
 		let bits = match index {
 			::Button::A => Some(A),
 			::Button::B => Some(B),
