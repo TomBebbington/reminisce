@@ -81,16 +81,14 @@ pub type JoystickIndex = u8;
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// An event emitted by a joystick
 pub enum Event {
-    /// Fired when a joystick is connected with the index of the joystick
-    /// that was connected.
+    /// Fired when a joystick is connected with its index.
     Connected(JoystickIndex),
-    /// Fired when a joystick is disconnected with the index of the joystick
-    /// that was disconnected.
+    /// Fired when a joystick is disconnected with its index.
     Disconnected(JoystickIndex),
-    /// Fired when a button is pressed with the joystick's index and the
+    /// Fired when a button is pressed with the joystick index and the
     /// button's index.
     ButtonPressed(JoystickIndex, Button),
-    /// Fired when a button is released with the joystick's index and the
+    /// Fired when a button is released with the joystick index and the
     /// button's index.
     ButtonReleased(JoystickIndex, Button),
     /// Fired when a axis is moved with the joystick index, axis index
@@ -133,7 +131,7 @@ pub trait Context: Sized {
     /// Return a reference to the joysticks connected.
     fn get_joysticks(&self) -> &[Self::Joystick];
 
-    /// Poll this context non-blockingly for events from any joysticks contained inside.
+    /// Poll this context non-blockingly for events from any joysticks.
     fn poll(&mut self) -> Option<Event>;
 
     /// Iterate through the events that haven't been processed yet
@@ -199,6 +197,8 @@ pub trait Joystick : Sized {
 }
 
 /// A joystick that tracks its state.
+///
+/// You must call `process` before you query anything.
 pub struct StatefulJoystick<J> where J: Joystick {
     joystick: J,
     buttons: i32,
@@ -206,18 +206,18 @@ pub struct StatefulJoystick<J> where J: Joystick {
 }
 impl<J> StatefulJoystick<J> where J: Joystick {
     /// Get the position of the axis.
-    pub fn get_axis(&self, axis: Axis) -> Option<i16> {
+    pub fn axis(&self, axis: Axis) -> Option<i16> {
         self.axes.get(axis as usize).cloned()
     }
-    /// Check if the button given is down.
-    pub fn get_button(&self, button: Button) -> Option<bool> {
+    /// Check if the button given is being pressed.
+    pub fn button(&self, button: Button) -> Option<bool> {
         if button < self.joystick.num_buttons() {
             Some(self.buttons & (1 << button) > 0)
         } else {
             None
         }
     }
-    /// Update this joystick with the event given.
+    /// Update this joystick's state with the event given.
     pub fn process(&mut self, event: Event) {
         let index = self.joystick.index();
         match event {
