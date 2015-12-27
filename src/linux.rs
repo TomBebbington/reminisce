@@ -10,10 +10,10 @@ use std::path::Path;
 use std::str::FromStr;
 use {Backend, Event, Joystick};
 
-static JSIOCGAXES: c_uint = 2147576337;
-static JSIOCGBUTTONS: c_uint = 2147576338;
-static JSIOCGID: c_uint = 2151705107;
-static JSIOCGID_LEN: usize = 64;
+const JSIOCGAXES: c_uint = 2147576337;
+const JSIOCGBUTTONS: c_uint = 2147576338;
+const JSIOCGID: c_uint = 2151705107;
+const JSIOCGID_LEN: usize = 64;
 
 extern {
 	fn open(path: *const c_char, oflag: c_int) -> c_int;
@@ -128,7 +128,7 @@ impl NativeJoystick {
 					return Some(match (event._type, event.value) {
 						(1, 0) => Event::ButtonReleased(self.index, event.number),
 						(1, 1) => Event::ButtonPressed(self.index, event.number),
-						(2, _) => Event::AxisMoved(self.index, event.number, event.value),
+						(2, _) => Event::AxisMoved(self.index, event.number, event.value as f32 / ::MAX_AXIS_VALUE as f32),
 						_ => panic!("Bad type and value {} {} for joystick", event._type, event.value)
 					})
 				}

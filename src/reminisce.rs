@@ -52,9 +52,7 @@ pub use native::Native;
 
 
 /// The maximum axis value
-pub const MAX_AXIS_VALUE:i16 = 32767;
-/// The minimum axis value
-pub const MIN_AXIS_VALUE:i16 = -32767;
+const MAX_AXIS_VALUE:i16 = 32767;
 
 use std::borrow::Cow;
 use std::fmt::Debug;
@@ -68,7 +66,7 @@ pub type Button = u8;
 /// A joystick index.
 
 pub type JoystickIndex = u8;
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 /// An event emitted by a joystick
 pub enum Event {
     /// Fired when a joystick is connected with its index.
@@ -82,9 +80,8 @@ pub enum Event {
     /// button's index.
     ButtonReleased(JoystickIndex, Button),
     /// Fired when a axis is moved with the joystick index, axis index
-    /// and its value, which is between `MIN_JOYSTICK_VALUE` and 
-    /// `MAX_JOYSTICK_VALUE`
-    AxisMoved(JoystickIndex, Axis, i16)
+    /// and its value, which is between `-1` and `1`
+    AxisMoved(JoystickIndex, Axis, f32)
 }
 
 /// A lightweight Backend that tracks and polls all the available joysticks.
@@ -194,11 +191,11 @@ pub trait Joystick: Sized {
 pub struct StatefulJoystick<J> where J: Joystick {
     joystick: J,
     buttons: i32,
-    axes: Vec<i16>
+    axes: Vec<f32>
 }
 impl<J> StatefulJoystick<J> where J: Joystick {
     /// Get the position of the axis.
-    pub fn axis(&self, axis: Axis) -> Option<i16> {
+    pub fn axis(&self, axis: Axis) -> Option<f32> {
         self.axes.get(axis as usize).cloned()
     }
     /// Check if the button given is being pressed.
@@ -230,7 +227,7 @@ impl<J> Joystick for StatefulJoystick<J> where J: Joystick {
     type OpenError = J::OpenError;
     fn open(index: JoystickIndex) -> Result<Self, Self::OpenError> {
         let joystick = try!(J::open(index));
-        let axes = (0..joystick.num_axes()).map(|_| 0).collect();
+        let axes = (0..joystick.num_axes()).map(|_| 0f32).collect();
         Ok(StatefulJoystick {
             joystick: joystick,
             buttons: 0,

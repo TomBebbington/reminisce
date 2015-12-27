@@ -41,6 +41,8 @@ impl Backend for Native {
                 Some(Event::ButtonPressed(which as ::JoystickIndex, button_idx)),
             event::Event::JoyButtonUp { which, button_idx, .. } =>
                 Some(Event::ButtonReleased(which as ::JoystickIndex, button_idx)),
+            event::Event::JoyAxisMotion { which, axis_idx, value , .. } =>
+                Some(Event::AxisMoved(which as ::JoystickIndex, axis_idx, value as f32 / ::MAX_AXIS_VALUE as f32)),
             _ => None,
         }).next()
     }
