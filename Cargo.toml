@@ -16,9 +16,13 @@ name = "reminisce"
 sdl = [ "sdl2" ]
 default = [ "libc" ]
 
-[dependencies.inotify]
-version = "*"
-optional = false
+[target.i686-unknown-linux-gnu.dependencies]
+inotify = "*"
+glob = "*"
+
+[target.x86_64-unknown-linux-gnu.dependencies]
+inotify = "*"
+glob = "*"
 
 [dependencies.glob]
 version = "*"

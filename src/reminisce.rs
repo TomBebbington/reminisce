@@ -26,6 +26,7 @@ extern crate inotify;
 #[cfg(feature = "sdl")]
 extern crate sdl2;
 
+#[cfg(target_os = "linux")]
 extern crate glob;
 
 #[cfg(all(target_os = "linux", not(feature = "sdl")))]
@@ -107,7 +108,7 @@ pub enum Event {
 ///     }
 /// }
 /// ```
-pub trait Backend: Sized + Send {
+pub trait Backend: Sized {
     /// The kind of joystick this Backend tracks.
     type Joystick : Joystick;
 
@@ -140,7 +141,7 @@ impl<'a> IntoIterator for &'a mut Native {
 }
 
 /// A joystick or gamepad.
-pub trait Joystick : Sized {
+pub trait Joystick: Sized {
     /// The error that could be thrown while trying to open the joystick
     type OpenError: Debug;
 
