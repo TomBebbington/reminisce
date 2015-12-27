@@ -15,7 +15,6 @@ install: |
     sudo apt-get install libsdl2-dev
   elif [ "TRAVIS_OS_NAME" = "osx"]
   then
-    sudo brew install rust
     sudo brew install sdl2
   fi
 script:
