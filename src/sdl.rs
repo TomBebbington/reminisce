@@ -24,7 +24,7 @@ impl Backend for Native {
     fn num_joysticks(&self) -> usize {
         self.system.num_joysticks().unwrap_or(0) as usize
     }
-    fn get_joysticks(&self) -> &[NativeJoystick] {
+    fn joysticks(&self) -> &[NativeJoystick] {
         &self.joysticks
     }
     fn poll(&mut self) -> Option<Event> {
