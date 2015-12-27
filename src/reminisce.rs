@@ -52,9 +52,9 @@ pub use native::Native;
 
 
 /// The maximum axis value
-pub static MAX_AXIS_VALUE:i16 = 32767;
+pub const MAX_AXIS_VALUE:i16 = 32767;
 /// The minimum axis value
-pub static MIN_AXIS_VALUE:i16 = -32767;
+pub const MIN_AXIS_VALUE:i16 = -32767;
 
 use std::borrow::Cow;
 use std::fmt::Debug;
