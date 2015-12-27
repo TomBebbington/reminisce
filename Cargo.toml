@@ -24,10 +24,6 @@ glob = "*"
 inotify = "*"
 glob = "*"
 
-[dependencies.glob]
-version = "*"
-optional = false
-
 [dependencies.libc]
 version = "*"
 optional = true
