@@ -7,10 +7,17 @@ matrix:
   allow_failures:
     - os: osx
 
-install:
-    - sudo add-apt-repository ppa:team-xbmc/ppa -y
-    - sudo apt-get update -q
-    - sudo apt-get install libsdl2-dev
+install: |
+  if [ "$TRAVIS_OS_NAME" = "linux" ]
+  then
+    sudo add-apt-repository ppa:team-xbmc/ppa -y &&
+    sudo apt-get update -q &&
+    sudo apt-get install libsdl2-dev
+  elif [ "TRAVIS_OS_NAME" = "osx"]
+  then
+    sudo brew install rust
+    sudo brew install sdl2
+  fi
 script:
     - cargo build --verbose
     - cargo build --verbose --features sdl
