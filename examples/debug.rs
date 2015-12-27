@@ -9,7 +9,7 @@ fn main() {
 	}
 	loop {
 		for event in backend.poll() {
-			println!("{} - {:?}", backend.num_joysticks(), event)
+			println!("{:?}", event);
 		}
 	}
 }

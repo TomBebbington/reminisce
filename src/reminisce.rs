@@ -24,6 +24,8 @@
 //! }
 //! ```
 extern crate libc;
+#[cfg(target_os = "linux")]
+extern crate inotify;
 #[cfg(target_os = "windows")]
 #[macro_use] extern crate rustc_bitflags;
 

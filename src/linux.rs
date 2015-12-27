@@ -1,9 +1,13 @@
 use libc::{c_char, c_ulong, c_int, c_uint, O_RDONLY, O_NONBLOCK, read};
+use inotify::INotify;
+use inotify::ffi;
 use glob::glob;
 use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 use std::io::Error;
 use std::mem;
+use std::path::Path;
+use std::str::FromStr;
 use {Backend, Event, Joystick};
 
 static JSIOCGAXES: c_uint = 2147576337;
@@ -19,7 +23,33 @@ extern {
 
 pub struct Native {
 	joysticks: Vec<NativeJoystick>,
-	pending: Vec<Event>
+	pending: Vec<Event>,
+	inotify: INotify
+}
+impl Native {
+	fn inner_poll(&mut self) -> Option<Event> {
+		self.inotify.available_events().unwrap().iter()
+			.find(|e| (e.is_create() || e.is_delete()) && e.name.starts_with("js"))
+			.map(|e| {
+				let index = FromStr::from_str(&e.name[2..]).unwrap();
+				if e.is_create() {
+					Event::Connected(index)
+				} else {
+					Event::Disconnected(index)
+				}
+			})
+			.or_else(||
+				self.pending.pop().or_else(|| 
+					self.joysticks.iter_mut().flat_map(|js| js.poll()).next()
+				)
+			)
+	}
+}
+impl Drop for Native {
+	fn drop(&mut self) {
+		let mut fresh = unsafe { mem::uninitialized() };
+		mem::swap(&mut self.inotify, &mut fresh);
+	}
 }
 impl Backend for Native {
 	type Joystick = NativeJoystick;
@@ -41,9 +71,12 @@ impl Backend for Native {
 			}
 		}
 		let pending = joysticks.iter().by_ref().map(|js:&NativeJoystick| Event::Connected(js.index)).collect();
+		let inotify = INotify::init().unwrap();
+		inotify.add_watch(Path::new("/dev/input"), ffi::IN_CREATE | ffi::IN_DELETE).unwrap();
 		Native {
 			joysticks: joysticks,
-			pending: pending
+			pending: pending,
+			inotify: inotify
 		}
 	}
 	fn num_joysticks(&self) -> usize {
@@ -53,21 +86,28 @@ impl Backend for Native {
 		return &self.joysticks;
 	}
 	fn poll(&mut self) -> Option<Event> {
-		match self.pending.pop() {
-			Some(Event::Disconnected(i)) => {
-				self.joysticks.remove(i as usize);
-				Some(Event::Disconnected(i))
-			}
-			Some(v) => Some(v),
-			None => self.joysticks.iter_mut().filter(|js| js.connected).flat_map(|js| js.poll()).next()
+		match self.inner_poll() {
+			Some(Event::Connected(index)) => {
+				if let Ok(joystick) = NativeJoystick::open(index) {
+					self.joysticks.push(joystick);
+					Some(Event::Connected(index))
+				} else {
+					self.inner_poll()
+				}
+			},
+			Some(Event::Disconnected(index)) => {
+				let (arr_index, _) = self.joysticks.iter().map(Joystick::index).enumerate().find(|&(_, i)| i == index).unwrap();
+				self.joysticks.remove(arr_index);
+				Some(Event::Disconnected(arr_index as u8))
+			},
+			v => v
 		}
 	}
 }
 /// Represents a system joystick
 pub struct NativeJoystick {
 	index: u8,
-	fd: c_int,
-	connected: bool
+	fd: c_int
 }
 
 impl NativeJoystick {
@@ -79,11 +119,8 @@ impl NativeJoystick {
 				if read(self.fd, mem::transmute(&mut event), event_size as usize) == -1 {
 					let err = Error::last_os_error();
 					match Error::last_os_error().raw_os_error().expect("Bad OS Error") {
-						19 => {
-							self.connected = false;
-							return Some(Event::Disconnected(self.index))
-						},
 						11 => (),
+						19 => return Some(Event::Disconnected(self.index)),
 						_ => panic!("{}", err)
 					}
 				} else if event._type & 0x80 == 0 {
@@ -113,14 +150,13 @@ impl ::Joystick for NativeJoystick {
 			} else {
 				Ok(NativeJoystick {
 					index: index,
-					fd: fd,
-					connected: true
+					fd: fd
 				})
 			}
 		}
 	}
 	fn connected(&self) -> bool {
-		self.connected
+		true
 	}
 	fn num_axes(&self) -> u8 {
 		unsafe {

@@ -16,6 +16,10 @@ name = "reminisce"
 sdl = [ "sdl2" ]
 default = [ "libc" ]
 
+[dependencies.inotify]
+version = "*"
+optional = false
+
 [dependencies.glob]
 version = "*"
 optional = false
