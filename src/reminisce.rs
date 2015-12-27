@@ -6,12 +6,6 @@
 //! ----------------------
 //! To scan for joysticks, a `Backend` must be created.
 //!
-//! ``` rust
-//! use reminisce::{Backend, Native};
-//! let backend = Native::new();
-//! println!("{} joysticks connected", backend.num_joysticks());
-//! ```
-//!
 //! Scanning for events
 //! -------------------
 //! To scan events, a `Backend` must be created and polled.
@@ -19,7 +13,7 @@
 //! ``` rust
 //! use reminisce::{Backend, Native};
 //! let mut backend = Native::new();
-//! for event in &mut backend {
+//! for event in backend.iter() {
 //!     println!("{:?}", event);
 //! }
 //! ```
@@ -121,7 +115,9 @@ pub trait Backend: Sized + Send {
     fn new() -> Self;
 
     /// Returns the number of joysticks connected.
-    fn num_joysticks(&self) -> usize;
+    fn num_joysticks(&self) -> usize {
+        self.joysticks().len()
+    }
 
     /// Return a reference to the joysticks connected.
     fn joysticks(&self) -> &[Self::Joystick];

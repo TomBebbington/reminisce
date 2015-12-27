@@ -49,6 +49,7 @@ impl Drop for Native {
 	fn drop(&mut self) {
 		let mut fresh = unsafe { mem::uninitialized() };
 		mem::swap(&mut self.inotify, &mut fresh);
+		fresh.close().unwrap();
 	}
 }
 impl Backend for Native {
