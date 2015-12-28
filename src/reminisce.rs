@@ -63,6 +63,19 @@ pub type Axis = u8;
 /// A button on a joystick.
 pub type Button = u8;
 
+/// A hat on a joystick.
+pub type Hat = u8;
+
+/// A hat position on a joystick.
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum HatPos {
+    Centered,
+    Up,
+    Right,
+    Down,
+    Left
+}
+
 /// A joystick index.
 
 pub type JoystickIndex = u8;
@@ -81,7 +94,10 @@ pub enum Event {
     ButtonReleased(JoystickIndex, Button),
     /// Fired when a axis is moved with the joystick index, axis index
     /// and its value, which is between `-1` and `1`
-    AxisMoved(JoystickIndex, Axis, f32)
+    AxisMoved(JoystickIndex, Axis, f32),
+    /// Fired when a hat is moved with the joystick index and the hat's
+    /// index and position.
+    HatMoved(JoystickIndex, Hat, HatPos)
 }
 
 /// A lightweight Backend that tracks and polls all the available joysticks.
@@ -178,6 +194,9 @@ pub trait Joystick: Sized {
     /// This is capped at 16 buttons currently.
     fn num_buttons(&self) -> Button;
 
+    /// Get the number of hats this joystick has
+    fn num_hats(&self) -> Hat;
+
     /// Get the battery level of this joystick
     ///
     /// Returns none if the joystick is wired or this operation is not supported
@@ -191,12 +210,17 @@ pub trait Joystick: Sized {
 pub struct StatefulJoystick<J> where J: Joystick {
     joystick: J,
     buttons: i32,
-    axes: Vec<f32>
+    axes: Vec<f32>,
+    hats: Vec<HatPos>
 }
 impl<J> StatefulJoystick<J> where J: Joystick {
     /// Get the position of the axis.
     pub fn axis(&self, axis: Axis) -> Option<f32> {
         self.axes.get(axis as usize).cloned()
+    }
+    /// Get the position of the hat.
+    pub fn hat(&self, hat: Hat) -> Option<HatPos> {
+        self.hats.get(hat as usize).cloned()
     }
     /// Check if the button given is being pressed.
     pub fn button(&self, button: Button) -> Option<bool> {
@@ -219,6 +243,9 @@ impl<J> StatefulJoystick<J> where J: Joystick {
             Event::AxisMoved(i, a, v) if i == index => {
                 self.axes[a as usize] = v;
             },
+            Event::HatMoved(i, h, v) if i == index => {
+                self.hats[h as usize] = v;
+            },
             _ => ()
         }
     }
@@ -228,9 +255,11 @@ impl<J> Joystick for StatefulJoystick<J> where J: Joystick {
     fn open(index: JoystickIndex) -> Result<Self, Self::OpenError> {
         let joystick = try!(J::open(index));
         let axes = (0..joystick.num_axes()).map(|_| 0f32).collect();
+        let hats = (0..joystick.num_hats()).map(|_| HatPos::Centered).collect();
         Ok(StatefulJoystick {
             joystick: joystick,
             buttons: 0,
+            hats: hats,
             axes: axes
         })
     }
@@ -248,6 +277,9 @@ impl<J> Joystick for StatefulJoystick<J> where J: Joystick {
     }
     fn num_buttons(&self) -> Button {
         self.joystick.num_buttons()
+    }
+    fn num_hats(&self) -> Hat {
+        self.joystick.num_hats()
     }
     fn battery(&self) -> Option<f32> {
         self.joystick.battery()

@@ -2,6 +2,7 @@ use sdl2::joystick::*;
 use sdl2::{init, event, Sdl, JoystickSubsystem, ErrorMessage};
 
 use std::borrow::Cow;
+use std::mem;
 
 use {Backend, Event};
 
@@ -43,6 +44,8 @@ impl Backend for Native {
                 Some(Event::ButtonReleased(which as ::JoystickIndex, button_idx)),
             event::Event::JoyAxisMotion { which, axis_idx, value , .. } =>
                 Some(Event::AxisMoved(which as ::JoystickIndex, axis_idx, value as f32 / ::MAX_AXIS_VALUE as f32)),
+            event::Event::JoyHatMotion { which, hat_idx, state, .. } =>
+                Some(Event::HatMoved(which as ::JoystickIndex, hat_idx, unsafe { mem::transmute(state) })),
             _ => None,
         }).next()
     }
@@ -68,6 +71,9 @@ impl ::Joystick for NativeJoystick {
     }
     fn num_buttons(&self) -> u8 {
         self.num_buttons() as u8
+    }
+    fn num_hats(&self) -> u8 {
+        self.num_hats() as u8
     }
     fn num_axes(&self) -> u8 {
         self.num_axes() as u8

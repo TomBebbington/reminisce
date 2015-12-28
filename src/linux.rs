@@ -159,6 +159,9 @@ impl ::Joystick for NativeJoystick {
 	fn connected(&self) -> bool {
 		true
 	}
+	fn num_hats(&self) -> u8 {
+		0
+	}
 	fn num_axes(&self) -> u8 {
 		unsafe {
 			let mut num_axes: c_char = mem::uninitialized();
