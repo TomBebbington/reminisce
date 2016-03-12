@@ -5,12 +5,15 @@
 
 ~~rusted joy, geddit?~~
 
-Reminisce is a Rust library for detecting gamepads / joysticks and reading
-input from them non-blockingly, without any external C dependencies.
+Reminisce is a primarily event-based Rust library for detecting gamepads / joysticks
+and reading input from them non-blockingly, without any external C dependencies.
 It does this by using the native platform's raw Joystick API.
 
-[Documentation](https://tombebbington.github.io/TomBebbington)
+This is intended for use with Glutin, since it doesn't implement a Joystick API.
+
+## Documentation
+Documentation is available [here](https://tombebbington.github.io/TomBebbington).
 
 ## Supported platforms
 + Linux (using the Joystick API or using SDL)
-+ Windows Vista or higher (using XInput, untested or using SDL)
++ Windows Vista or higher (XInput should work but for the moment just SDL is supported)
